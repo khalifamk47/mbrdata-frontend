@@ -1,0 +1,82 @@
+import { APP_CONFIG } from './config.js';
+
+const storage = window.localStorage;
+
+export function getSession() {
+  let user = {};
+  try { user = JSON.parse(storage.getItem('authUser') || '{}'); } catch (_) {}
+  return { token: storage.getItem('authToken') || '', user };
+}
+
+export function saveSession(payload) {
+  const token = payload.token || payload.apikey || payload.user?.apikey || '';
+  if (!token) throw new Error('The server did not return an authentication token.');
+  storage.setItem('authToken', token);
+  storage.setItem('authUser', JSON.stringify(payload.user || {}));
+}
+
+export function clearSession() {
+  storage.removeItem('authToken');
+  storage.removeItem('authUser');
+}
+
+export async function api(path, options = {}) {
+  const { token } = getSession();
+  const headers = new Headers(options.headers || {});
+  headers.set('Accept', 'application/json');
+  if (!(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  const response = await fetch(`${APP_CONFIG.API_BASE_URL}${path}`, { ...options, headers });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(payload.message || payload.msg || payload.error || 'Request failed.');
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
+  }
+  return payload;
+}
+
+export async function loadBrand() {
+  try {
+    const config = await api('/client/config');
+    storage.setItem('clientBrand', JSON.stringify(config));
+    applyBrand(config);
+    return config;
+  } catch (_) {
+    let cached = {};
+    try { cached = JSON.parse(storage.getItem('clientBrand') || '{}'); } catch (_) {}
+    applyBrand(cached);
+    return cached;
+  }
+}
+
+export function applyBrand(config = {}) {
+  const color = config.settings?.color || config.client?.brand?.primary_color || config.color;
+  const name = config.settings?.name || config.client?.name || config.name || 'MBR Data';
+  if (color) document.documentElement.style.setProperty('--brand', color);
+  document.querySelectorAll('[data-brand-name]').forEach((node) => { node.textContent = name; });
+}
+
+export function requireAuth() {
+  if (!getSession().token) {
+    location.replace(APP_CONFIG.LOGIN_PAGE);
+    throw new Error('Authentication required.');
+  }
+}
+
+export function money(value) {
+  return `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+export function notify(message, type = 'info') {
+  const toast = document.querySelector('[data-toast]');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.dataset.type = type;
+  toast.classList.add('show');
+  clearTimeout(notify.timer);
+  notify.timer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
