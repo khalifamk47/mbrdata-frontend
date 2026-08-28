@@ -1,0 +1,10 @@
+.auth-card-wide { width: min(620px, 100%); padding: 32px 38px; }
+.auth-card-wide form { margin-top: 20px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.optional { margin-left: 5px; color: var(--muted); font-size: 10px; font-weight: 500; }
+.check-row { display: flex !important; align-items: flex-start; gap: 10px; margin: -2px 0 20px !important; color: var(--muted); font-weight: 500 !important; line-height: 1.4; }
+.check-row input { width: 17px; height: 17px; flex: none; accent-color: var(--brand); }
+.auth-icon { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 22px; border-radius: 17px; color: var(--brand); background: #edf1ff; font-size: 23px; }
+.otp-field input { font-size: 20px; font-weight: 700; letter-spacing: .3em; }
+.toast[data-type="success"] { background: #16803d; }
+@media (max-width: 620px) { .auth-card-wide { padding: 26px; } .form-grid { grid-template-columns: 1fr; gap: 0; } .auth-card form { margin-top: 22px; } .auth-card-wide .field { margin-bottom: 16px; } }
