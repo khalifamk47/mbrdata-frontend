@@ -53,10 +53,19 @@ export async function loadBrand() {
 }
 
 export function applyBrand(config = {}) {
-  const color = config.settings?.color || config.client?.brand?.primary_color || config.color;
+  const rawColor = config.settings?.color || config.client?.brand?.primary_color || config.color;
+  const color = normalizeBrandColor(rawColor);
   const name = config.settings?.name || config.client?.name || config.name || 'MBR Data';
   if (color) document.documentElement.style.setProperty('--brand', color);
   document.querySelectorAll('[data-brand-name]').forEach((node) => { node.textContent = name; });
+}
+
+export function normalizeBrandColor(value) {
+  if (typeof value !== 'string') return '';
+  const normalized = value.trim().replace(/^#+/, '');
+  if (/^[0-9a-f]{3}$/i.test(normalized) || /^[0-9a-f]{6}$/i.test(normalized)) return `#${normalized}`;
+  if (/^[0-9a-f]{8}$/i.test(normalized)) return `#${normalized}`;
+  return '';
 }
 
 export function requireAuth() {
@@ -79,4 +88,3 @@ export function notify(message, type = 'info') {
   clearTimeout(notify.timer);
   notify.timer = setTimeout(() => toast.classList.remove('show'), 3000);
 }
-
