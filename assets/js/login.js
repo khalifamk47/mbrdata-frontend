@@ -1,5 +1,6 @@
 import { APP_CONFIG } from './config.js';
 import { api, getSession, loadBrand, notify, saveSession } from './api.js';
+document.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="./assets/css/auth.css">');
 
 if (getSession().token) location.replace(APP_CONFIG.DASHBOARD_PAGE);
 loadBrand();
@@ -33,4 +34,3 @@ form.addEventListener('submit', async (event) => {
     submit.classList.remove('loading');
   }
 });
-
