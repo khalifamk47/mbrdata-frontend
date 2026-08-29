@@ -1,5 +1,6 @@
 import { APP_CONFIG } from './config.js';
 import { api, getSession, loadBrand, notify, saveSession } from './api.js';
+import { showProcessing, showResult } from './alerts.js';
 document.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="./assets/css/auth.css">');
 
 if (getSession().token) location.replace(APP_CONFIG.DASHBOARD_PAGE);
@@ -22,15 +23,17 @@ form.addEventListener('submit', async (event) => {
   const password = document.querySelector('#password').value;
   if (!phone || !password) return notify('Enter your phone number and password.', 'error');
   submit.disabled = true;
-  submit.classList.add('loading');
+  await showProcessing('Signing you in...', 'Verifying your account details securely.');
   try {
     const result = await api('/login', { method: 'POST', body: JSON.stringify({ phone, password }) });
     saveSession(result);
+    window.Swal.close();
+    await showResult({ success: true, title: 'Welcome Back', message: result.message || 'Login successful.' });
     location.replace(APP_CONFIG.DASHBOARD_PAGE);
   } catch (error) {
-    notify(error.message, 'error');
+    window.Swal?.close();
+    await showResult({ success: false, title: 'Login Failed', message: error.message });
   } finally {
     submit.disabled = false;
-    submit.classList.remove('loading');
   }
 });

@@ -7,6 +7,7 @@
 .auth-icon { display: grid; place-items: center; width: 54px; height: 54px; margin-bottom: 22px; border-radius: 17px; color: var(--brand); background: #edf1ff; font-size: 23px; }
 .otp-field input { font-size: 20px; font-weight: 700; letter-spacing: .3em; }
 .toast[data-type="success"] { background: #16803d; }
+.mbr-alert { border-radius:24px!important; font-family:Ubuntu,sans-serif!important; }
 @media (max-width: 900px) {
   .auth-page { position: relative; overflow-x: hidden; background: radial-gradient(circle at 88% 5%, rgba(111,132,255,.42) 0 70px, transparent 72px), radial-gradient(circle at 5% 19%, rgba(255,255,255,.08) 0 92px, transparent 94px), linear-gradient(160deg, #07143d 0 315px, #edf1f8 316px 100%); }
   .auth-page::before { content: "SECURE • SIMPLE • RELIABLE"; position: absolute; top: 58px; left: 50%; width: max-content; transform: translateX(-50%); color: rgba(255,255,255,.62); font-size: 10px; font-weight: 700; letter-spacing: .2em; }
