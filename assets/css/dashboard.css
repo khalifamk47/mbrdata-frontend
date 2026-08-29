@@ -22,7 +22,7 @@ button,input { font:inherit; }
 .side nav a.active i { background:#fff; color:var(--brand); border-color:#fff; box-shadow:0 8px 18px #02061736; }
 .side nav a:hover i { background:#ffffff24; color:#fff; transform:scale(1.04); }
 .side nav a.active:hover i { background:#fff; color:var(--brand); }
-.side>button { margin-top:auto; padding:11px 13px; background:#ffffff10; color:#fff; border-color:#ffffff1c; cursor:pointer; }
+.side>button { margin-top:8px; padding:11px 13px; background:#ffffff10; color:#fff; border-color:#ffffff1c; cursor:pointer; }
 .side>button:hover { background:#ef4444; border-color:#ef4444; }
 main { margin-left:250px; }
 header { position:sticky; top:0; z-index:20; height:82px; padding:14px 28px; display:flex; align-items:center; gap:14px; background:#ffffffea; border-bottom:1px solid var(--line); backdrop-filter:blur(14px); }
