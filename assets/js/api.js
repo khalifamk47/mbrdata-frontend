@@ -29,7 +29,23 @@ export async function api(path, options = {}) {
   if (!(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  const response = await fetch(`${APP_CONFIG.API_BASE_URL}${path}`, { ...options, headers });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  let response;
+  try {
+    response = await fetch(`${APP_CONFIG.API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+      signal: options.signal || controller.signal,
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('The server is taking too long to respond. Please try again.');
+    }
+    throw new Error('Unable to reach the server. Please check that the local backend is running.');
+  } finally {
+    clearTimeout(timeout);
+  }
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(payload.message || payload.msg || payload.error || 'Request failed.');
@@ -101,8 +117,8 @@ export function renderSidebarNavigation() {
     ['airtime.html', 'phone', 'Buy Airtime', true],
     ['wallet.html', 'wallet2', 'Add Money', false],
     ['history.html', 'receipt', 'Transaction History', false],
-    ['pricing.html', 'tags', 'Pricing', true],
-    ['developer-api.html', 'code-slash', 'Developer API', true],
+    ['pricing.html', 'tags', 'Pricing', false],
+    ['developer-api.html', 'code-slash', 'Developer API', false],
     ['profile.html', 'person-gear', 'Profile', false],
     ['support.html', 'headset', 'Support', false],
   ];

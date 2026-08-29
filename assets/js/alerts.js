@@ -13,7 +13,7 @@ export function loadSweetAlert() {
   if (loaderPromise) return loaderPromise;
   loaderPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+    script.src = './assets/vendor/sweetalert2.all.min.js';
     script.onload = () => resolve(window.Swal);
     script.onerror = () => reject(new Error('Unable to load the alert interface.'));
     document.head.append(script);

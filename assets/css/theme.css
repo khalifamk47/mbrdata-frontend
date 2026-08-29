@@ -2,7 +2,7 @@
 .theme-toggle:hover { transform:translateY(-2px); box-shadow:0 11px 25px #0f172a20; }
 .theme-toggle i { font-size:16px; }
 .auth-page>.theme-toggle { position:fixed; top:18px; right:18px; z-index:30; }
-[data-theme="dark"] { --ink:#eef2ff; --muted:#9aa6bd; --bg:#091225; --card:#111c31; --line:#26334a; --soft:#1b2a50; --brand-soft:#1b2a50; --brand-faint:#121f39; color-scheme:dark; }
+[data-theme="dark"] { --ink:#eef2ff; --text:#eef2ff; --muted:#9aa6bd; --bg:#091225; --card:#111c31; --surface:#111c31; --line:#26334a; --soft:#1b2a50; --brand-soft:#1b2a50; --brand-faint:#121f39; color-scheme:dark; }
 [data-theme="dark"] body { background:#091225; color:#eef2ff; }
 [data-theme="dark"] .app-page,[data-theme="dark"] .auth-page { background:#091225; }
 [data-theme="dark"] header,[data-theme="dark"] .dash-header { background:#0d1729e8; border-color:#26334a; }
@@ -23,4 +23,7 @@
 [data-theme="dark"] .mbr-alert .swal2-cancel,[data-theme="dark"] .receipt-tools button { background:#172238!important; color:#dbe4ff!important; border-color:#34425a!important; }
 [data-theme="dark"] .receipt-sheet { border-color:#2a3850; }
 [data-theme="dark"] .receipt-line { border-color:#2a3850; }
+[data-theme="dark"] .catalog-panel,[data-theme="dark"] .developer-card { background:#111c31; color:#eef2ff; border-color:#26334a; }
+[data-theme="dark"] .catalog-table th,[data-theme="dark"] .pricing-tabs,[data-theme="dark"] .copy-row { background:#0c1628; }
+[data-theme="dark"] .catalog-table-wrap,[data-theme="dark"] .catalog-table td,[data-theme="dark"] .rule-grid>div,[data-theme="dark"] .endpoint-row { border-color:#26334a; }
 @media(max-width:560px) { .theme-toggle { width:40px; padding:0; } .theme-toggle span { display:none; } .auth-page>.theme-toggle { top:14px; right:14px; } }
