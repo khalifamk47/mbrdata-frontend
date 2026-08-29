@@ -88,3 +88,23 @@ export function notify(message, type = 'info') {
   clearTimeout(notify.timer);
   notify.timer = setTimeout(() => toast.classList.remove('show'), 3000);
 }
+
+export function renderSidebarNavigation() {
+  const nav = document.querySelector('.side nav');
+  if (!nav) return;
+  const page = location.pathname.split('/').pop() || 'dashboard.html';
+  const items = [
+    ['dashboard.html', 'house', 'Dashboard', false],
+    ['data.html', 'wifi', 'Buy Data', true],
+    ['airtime.html', 'phone', 'Buy Airtime', true],
+    ['wallet.html', 'wallet2', 'Add Money', false],
+    ['history.html', 'receipt', 'Transaction History', false],
+    ['pricing.html', 'tags', 'Pricing', true],
+    ['developer-api.html', 'code-slash', 'Developer API', true],
+    ['profile.html', 'person-gear', 'Profile', false],
+    ['support.html', 'headset', 'Support', false],
+  ];
+  nav.innerHTML = `<small>MAIN MENU</small>${items.map(([href, icon, label, soon]) => `<a href="${soon ? '#' : href}" class="${page === href ? 'active' : ''}" ${soon ? 'data-soon' : ''}><i class="bi bi-${icon}"></i><span>${label}</span>${soon ? '<em>soon</em>' : ''}</a>`).join('')}`;
+}
+
+renderSidebarNavigation();
