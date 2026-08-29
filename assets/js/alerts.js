@@ -1,5 +1,13 @@
 let loaderPromise;
 
+if (!document.querySelector('link[data-mbr-alerts]')) {
+  const stylesheet = document.createElement('link');
+  stylesheet.rel = 'stylesheet';
+  stylesheet.href = './assets/css/alerts.css';
+  stylesheet.dataset.mbrAlerts = 'true';
+  document.head.append(stylesheet);
+}
+
 export function loadSweetAlert() {
   if (window.Swal) return Promise.resolve(window.Swal);
   if (loaderPromise) return loaderPromise;
@@ -15,19 +23,20 @@ export function loadSweetAlert() {
 
 export async function confirmAction({ title, text, confirmText = 'Continue', icon = 'question' }) {
   const Swal = await loadSweetAlert();
-  const result = await Swal.fire({ icon, title, text, showCancelButton: true, confirmButtonText: confirmText, cancelButtonText: 'Cancel', reverseButtons: true, focusCancel: true, confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#132b86', customClass: { popup: 'mbr-alert' } });
+  const result = await Swal.fire({ icon, title, text, showCancelButton: true, confirmButtonText: confirmText, cancelButtonText: 'Cancel', reverseButtons: true, focusCancel: true, customClass: { popup: `mbr-alert ${icon === 'warning' ? 'mbr-danger' : ''}` } });
   return result.isConfirmed;
 }
 
 export async function showProcessing(title = 'Processing...', text = 'Please wait while we complete your request.') {
   const Swal = await loadSweetAlert();
-  Swal.fire({ title, text, allowOutsideClick: false, allowEscapeKey: false, didOpen: () => Swal.showLoading(), customClass: { popup: 'mbr-alert' } });
+  const dots = Array.from({ length: 10 }, () => '<span></span>').join('');
+  Swal.fire({ title, html: `<div class="mbr-loader" aria-hidden="true">${dots}</div><div>${text}</div>`, allowOutsideClick: false, allowEscapeKey: false, showConfirmButton: false, customClass: { popup: 'mbr-alert mbr-processing' } });
   return Swal;
 }
 
 export async function showResult({ success, title, message }) {
   const Swal = await loadSweetAlert();
-  return Swal.fire({ icon: success ? 'success' : 'error', title, text: message, confirmButtonText: 'Okay', confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#132b86', customClass: { popup: 'mbr-alert' } });
+  return Swal.fire({ icon: success ? 'success' : 'error', title, text: message, confirmButtonText: 'Okay', customClass: { popup: 'mbr-alert' } });
 }
 
 export async function runAction(action, { loadingTitle = 'Processing...', loadingText, successTitle = 'Successful', successMessage } = {}) {
