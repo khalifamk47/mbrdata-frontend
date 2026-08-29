@@ -1,5 +1,9 @@
 @import url('./dashboard.css');
-.page-grid { display:grid; grid-template-columns:1.1fr .9fr; gap:14px; }
+.page-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:14px; }
+.page-grid>section { min-width:0; }
+.page-grid>aside { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; align-items:stretch; }
+.page-grid>aside>.panel { height:100%; margin-top:0; }
+.page-grid>aside>.panel:only-child { grid-column:1/-1; }
 .panel,.page-hero { padding:18px; background:#fff; border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); }
 .page-hero { display:flex; justify-content:space-between; align-items:center; background:linear-gradient(135deg,color-mix(in srgb,var(--brand) 16%,white),#fff); }
 .page-hero h2,.panel h3 { margin:0; }
@@ -83,6 +87,8 @@
 @media print { body>* { visibility:hidden; } .swal2-container,.swal2-container * { visibility:visible; } .swal2-container { position:absolute!important; inset:0!important; } .receipt-tools,.swal2-actions { display:none!important; } }
 @media(max-width:900px) {
   .page-grid { grid-template-columns:1fr; }
+  .page-grid>aside { grid-template-columns:1fr; }
+  .page-grid>aside>.panel:only-child { grid-column:auto; }
   .wrap { padding-bottom:98px; }
   .bottom { left:12px; right:12px; bottom:10px; width:auto; padding:7px; transform:none; border-radius:22px; }
   .bottom a { padding:9px 4px; font-size:9px; border-radius:15px; }
