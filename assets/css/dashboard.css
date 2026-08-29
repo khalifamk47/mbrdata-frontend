@@ -61,6 +61,7 @@ header p { margin:4px 0; color:var(--muted); font-size:11px; }
 .heading a { color:var(--brand); font-size:11px; font-weight:700; }
 .services { display:grid; grid-template-columns:repeat(4,1fr); gap:11px; }
 .service { min-height:105px; display:grid; place-items:center; align-content:center; gap:8px; font-size:12px; font-weight:700; }
+.service small { display:block; color:var(--muted); font-size:8px; }.service.service-locked { opacity:.58; cursor:not-allowed; filter:grayscale(.45); }
 .service .ico { width:54px; height:54px; font-size:20px; }
 .transactions { display:grid; gap:9px; }
 .transaction { padding:12px; display:grid; grid-template-columns:45px 1fr auto; align-items:center; gap:11px; }

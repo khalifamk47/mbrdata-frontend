@@ -113,8 +113,8 @@ export function renderSidebarNavigation() {
   const page = location.pathname.split('/').pop() || 'dashboard.html';
   const items = [
     ['dashboard.html', 'house', 'Dashboard', false],
-    ['data.html', 'wifi', 'Buy Data', true],
-    ['airtime.html', 'phone', 'Buy Airtime', true],
+    ['service.html?service=data', 'wifi', 'Buy Data', false],
+    ['service.html?service=airtime', 'phone', 'Buy Airtime', false],
     ['wallet.html', 'wallet2', 'Add Money', false],
     ['history.html', 'receipt', 'Transaction History', false],
     ['pricing.html', 'tags', 'Pricing', false],
