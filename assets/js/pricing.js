@@ -1,77 +1,26 @@
-import { api, money, notify } from './api.js';
-import { bootShell } from './shell.js';
+import { api, getSession, money, notify } from './api.js';
+import { bootShell, copyText } from './shell.js';
+import { loadSweetAlert, runAction } from './alerts.js';
 
-bootShell('pricing');
-
-const state = { active: 'airtime', catalogs: {}, loaded: false };
+let user = bootShell('pricing');
+const state = { active: 'airtime', catalogs: {} };
 const content = document.querySelector('#pricing-content');
-const summary = document.querySelector('#catalog-summary');
+const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[c]));
+const tier = (plan, key, fallback) => money(plan?.prices?.[key] ?? fallback ?? plan?.amount ?? plan?.price ?? 0);
 
-const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
-const tierPrice = (plan, key = 'smart') => money(plan?.prices?.[key] ?? plan?.amount ?? plan?.price ?? 0);
-const status = (available) => `<span class="catalog-status ${available === false ? 'off' : ''}"><i></i>${available === false ? 'Unavailable' : 'Available'}</span>`;
+function table(headers, rows) { return `<div class="pricing-table-wrap"><table class="pricing-table"><thead><tr>${headers.map((h)=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr><td colspan="${headers.length}">No pricing available.</td></tr>`}</tbody></table></div>`; }
+function renderAirtime(){const rows=(state.catalogs.airtime?.networks||[]).map(n=>`<tr><td>${escapeHtml(n.name)}</td><td>${escapeHtml(n.network_id)}</td><td>${Number(n.prices?.smart||n.rate||1).toFixed(3)}</td><td>${Number(n.prices?.topup||n.rate||1).toFixed(3)}</td><td>${Number(n.prices?.affiliate||n.rate||1).toFixed(3)}</td><td>${Number(n.prices?.api||n.rate||1).toFixed(3)}</td><td>${n.available===false?'Locked':'Available'}</td></tr>`);return table(['Network','Network ID','Smart Rate','Topup Rate','Affiliate Rate','API Rate','Status'],rows)}
+function renderData(){const rows=[];(state.catalogs.data?.networks||[]).forEach(n=>(n.types||[]).forEach(t=>(t.plans||[]).forEach(p=>rows.push(`<tr><td>${escapeHtml(n.name)}</td><td>${escapeHtml(t.network_id)}</td><td>${escapeHtml(t.label)}</td><td>${escapeHtml(p.planid||p.id)}</td><td>${escapeHtml(p.size||p.name)}</td><td>${escapeHtml(p.validity)} ${String(p.validity)==='1'?'Day':'Days'}</td><td>${tier(p,'smart')}</td><td>${tier(p,'topup')}</td><td>${tier(p,'affiliate')}</td><td>${tier(p,'api')}</td></tr>`))));return table(['Network','Network ID','Type','Plan ID','Plan','Validity','Smart','Topup','Affiliate','API'],rows)}
+function renderCable(){const rows=[];(state.catalogs.cable?.providers||[]).forEach(pr=>(pr.plans||[]).forEach(p=>rows.push(`<tr><td>${escapeHtml(pr.name)}</td><td>${escapeHtml(pr.cableid)}</td><td>${escapeHtml(p.planid||p.id)}</td><td>${escapeHtml(p.name)}</td><td>${tier(p,'smart')}</td><td>${tier(p,'topup')}</td><td>${tier(p,'affiliate')}</td><td>${tier(p,'api')}</td><td>${pr.available===false?'Locked':'Available'}</td></tr>`)));return table(['Provider','Network ID','Plan ID','Package','Smart','Topup','Affiliate','API','Status'],rows)}
+function renderElectricity(){const c=state.catalogs.electricity||{},rows=(c.providers||[]).map(p=>`<tr><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.disco)}</td><td>${escapeHtml(p.abbreviation)}</td><td>Minimum ${money(c.minimum_amount||100)}</td><td>${p.available===false?'Locked':'Available'}</td></tr>`);return table(['Disco','Network ID','Code','Amount Rule','Status'],rows)}
+function renderExam(){const rows=[];(state.catalogs.exam?.providers||[]).forEach(pr=>(pr.plans||[]).forEach(p=>rows.push(`<tr><td>${escapeHtml(pr.name)}</td><td>${escapeHtml(p.examid||p.id)}</td><td>${escapeHtml(p.name)}</td><td>${tier(p,'smart')}</td><td>${tier(p,'topup')}</td><td>${tier(p,'affiliate')}</td><td>${tier(p,'api')}</td></tr>`)));return table(['Provider','Plan ID','Plan','Smart','Topup','Affiliate','API'],rows)}
+function renderSpecial(){const rows=[];[['Smile','smile'],['Alpha Topup','alpha'],['Ratel','ratel'],['Kirani','kirani']].forEach(([name,key])=>(state.catalogs[key]?.plans||[]).forEach(p=>rows.push(`<tr><td>${name}</td><td>${escapeHtml(p.planid||p.id)}</td><td>${escapeHtml(p.name||p.description)}</td><td>${escapeHtml(p.minutes||'-')}</td><td>${tier(p,'smart')}</td><td>${tier(p,'topup')}</td><td>${tier(p,'affiliate')}</td><td>${tier(p,'api')}</td></tr>`)));return table(['Service','Plan ID','Plan','Minutes','Smart','Topup','Affiliate','API'],rows)}
+function render(){content.innerHTML=({airtime:renderAirtime,data:renderData,cable:renderCable,electricity:renderElectricity,exam:renderExam,special:renderSpecial}[state.active])()}
+function renderKey(){document.querySelector('#api-key-value').textContent=user.apikey||user.api_key||getSession().token||'No API key found'}
 
-function table(headers, rows) {
-  return `<div class="catalog-table-wrap"><table class="catalog-table"><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.join('') : `<tr><td colspan="${headers.length}"><div class="catalog-empty"><i class="bi bi-inbox"></i><b>No pricing available</b><small>The backend returned no active plans for this service.</small></div></td></tr>`}</tbody></table></div>`;
-}
+async function loadPricing(){content.innerHTML='<div class="empty">Loading pricing...</div>';const sources={airtime:'/airtime/catalog',data:'/data/catalog',cable:'/cable/catalog',electricity:'/electricity/catalog',exam:'/exam/catalog',smile:'/smile/catalog',alpha:'/alpha/catalog',ratel:'/ratel/catalog',kirani:'/kirani/catalog'};const entries=Object.entries(sources),results=await Promise.allSettled([api('/me'),...entries.map(([,url])=>api(url))]);if(results[0].status==='fulfilled'){user=results[0].value.user||user;localStorage.setItem('authUser',JSON.stringify(user));renderKey()}results.slice(1).forEach((r,i)=>{if(r.status==='fulfilled')state.catalogs[entries[i][0]]=r.value});document.querySelector('#pricing-tier').textContent=`${state.catalogs.data?.tier||state.catalogs.exam?.tier||'SMART'} pricing`;render()}
 
-function renderAirtime() {
-  const rows = (state.catalogs.airtime?.networks || []).map((network) => `<tr><td><b>${escapeHtml(network.name)}</b></td><td>${escapeHtml(network.network_id)}</td><td>${Number(network.prices?.smart ?? network.rate ?? 1).toFixed(3)}</td><td>${Number(network.prices?.topup ?? network.rate ?? 1).toFixed(3)}</td><td>${Number(network.prices?.affiliate ?? network.rate ?? 1).toFixed(3)}</td><td>${Number(network.prices?.api ?? network.rate ?? 1).toFixed(3)}</td><td>${status(network.available)}</td></tr>`);
-  return table(['Network', 'ID', 'Smart rate', 'Topup rate', 'Affiliate', 'API rate', 'Status'], rows);
-}
-
-function renderData() {
-  const rows = [];
-  (state.catalogs.data?.networks || []).forEach((network) => (network.types || []).forEach((type) => (type.plans || []).forEach((plan) => rows.push(`<tr><td><b>${escapeHtml(network.name)}</b></td><td>${escapeHtml(type.label)}</td><td>${escapeHtml(plan.planid || plan.id)}</td><td>${escapeHtml(plan.size || plan.name)}</td><td>${escapeHtml(plan.validity)} ${String(plan.validity) === '1' ? 'Day' : 'Days'}</td><td>${tierPrice(plan)}</td><td>${tierPrice(plan, 'api')}</td></tr>`))));
-  return table(['Network', 'Type', 'Plan ID', 'Plan', 'Validity', 'User price', 'API price'], rows);
-}
-
-function renderCable() {
-  const rows = [];
-  (state.catalogs.cable?.providers || []).forEach((provider) => (provider.plans || []).forEach((plan) => rows.push(`<tr><td><b>${escapeHtml(provider.name)}</b></td><td>${escapeHtml(plan.planid || plan.id)}</td><td>${escapeHtml(plan.name)}</td><td>${tierPrice(plan)}</td><td>${tierPrice(plan, 'api')}</td><td>${status(provider.available)}</td></tr>`)));
-  return table(['Provider', 'Plan ID', 'Package', 'User price', 'API price', 'Status'], rows);
-}
-
-function renderElectricity() {
-  const catalog = state.catalogs.electricity || {};
-  const rows = (catalog.providers || []).map((provider) => `<tr><td><b>${escapeHtml(provider.name)}</b></td><td>${escapeHtml(provider.disco)}</td><td>${escapeHtml(provider.abbreviation)}</td><td>${money(catalog.minimum_amount || 100)} minimum</td><td>${status(provider.available)}</td></tr>`);
-  return table(['Distribution company', 'ID', 'Code', 'Amount rule', 'Status'], rows);
-}
-
-function renderExam() {
-  const rows = [];
-  (state.catalogs.exam?.providers || []).forEach((provider) => (provider.plans || []).forEach((plan) => rows.push(`<tr><td><b>${escapeHtml(provider.name)}</b></td><td>${escapeHtml(plan.examid || plan.id)}</td><td>${escapeHtml(plan.name)}</td><td>${tierPrice(plan)}</td><td>${tierPrice(plan, 'api')}</td></tr>`)));
-  return table(['Provider', 'Plan ID', 'Product', 'User price', 'API price'], rows);
-}
-
-function renderSpecial() {
-  const rows = [];
-  [['Smile', 'smile'], ['Alpha Topup', 'alpha'], ['Ratel', 'ratel'], ['Kirani', 'kirani']].forEach(([label, key]) => (state.catalogs[key]?.plans || []).forEach((plan) => rows.push(`<tr><td><b>${label}</b></td><td>${escapeHtml(plan.planid || plan.id)}</td><td>${escapeHtml(plan.name || plan.description)}</td><td>${escapeHtml(plan.minutes || '—')}</td><td>${tierPrice(plan)}</td><td>${tierPrice(plan, 'api')}</td></tr>`)));
-  return table(['Service', 'Plan ID', 'Plan', 'Minutes', 'User price', 'API price'], rows);
-}
-
-function render() {
-  const renderers = { airtime: renderAirtime, data: renderData, cable: renderCable, electricity: renderElectricity, exam: renderExam, special: renderSpecial };
-  content.innerHTML = renderers[state.active]();
-}
-
-async function loadPricing() {
-  content.innerHTML = '<div class="catalog-loading"><span></span><p>Fetching live prices…</p></div>';
-  summary.textContent = 'Connecting to the backend service catalog…';
-  const services = { airtime: '/airtime/catalog', data: '/data/catalog', cable: '/cable/catalog', electricity: '/electricity/catalog', exam: '/exam/catalog', smile: '/smile/catalog', alpha: '/alpha/catalog', ratel: '/ratel/catalog', kirani: '/kirani/catalog' };
-  const entries = Object.entries(services);
-  const results = await Promise.allSettled(entries.map(([, endpoint]) => api(endpoint)));
-  let successCount = 0;
-  results.forEach((result, index) => { if (result.status === 'fulfilled') { state.catalogs[entries[index][0]] = result.value; successCount += 1; } });
-  state.loaded = true;
-  summary.textContent = `${successCount} of ${entries.length} live catalog sources loaded · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-  if (!successCount) notify('The pricing catalog could not be reached.', 'error');
-  render();
-}
-
-document.querySelectorAll('[data-tab]').forEach((button) => button.addEventListener('click', () => {
-  document.querySelectorAll('[data-tab]').forEach((item) => item.classList.remove('active'));
-  button.classList.add('active'); state.active = button.dataset.tab; if (state.loaded) render();
-}));
-document.querySelector('#refresh-pricing').addEventListener('click', loadPricing);
-loadPricing();
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.active=b.dataset.tab;render()});
+document.querySelector('#copy-api-key').onclick=()=>copyText(user.apikey||user.api_key||getSession().token||'','API key copied.');
+document.querySelector('#reset-api-key').onclick=async()=>{const Swal=await loadSweetAlert(),answer=await Swal.fire({title:'Reset API Key?',text:'Old integrations using your current key will stop working.',icon:'warning',input:'password',inputLabel:'Enter your 4-digit transaction PIN',inputAttributes:{maxlength:4,inputmode:'numeric'},showCancelButton:true,confirmButtonText:'Reset API Key',customClass:{popup:'mbr-alert mbr-danger'},preConfirm:(pin)=>/^\d{4}$/.test(pin)?pin:Swal.showValidationMessage('Enter your complete 4-digit PIN.')});if(!answer.isConfirmed)return;try{const response=await runAction(()=>api('/profile/api-key/reset',{method:'POST',body:JSON.stringify({pin:answer.value})}),{loadingTitle:'Resetting API key...',successTitle:'API Key Reset'});user=response.user||{...user,apikey:response.apikey};localStorage.setItem('authUser',JSON.stringify(user));renderKey()}catch{}};
+renderKey();loadPricing().catch(e=>{content.innerHTML=`<div class="empty">${escapeHtml(e.message)}</div>`;notify(e.message,'error')});

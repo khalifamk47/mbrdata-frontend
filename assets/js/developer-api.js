@@ -2,42 +2,16 @@ import { APP_CONFIG } from './config.js';
 import { api, getSession, notify } from './api.js';
 import { bootShell, copyText } from './shell.js';
 
-const cachedUser = bootShell('developer-api');
-const baseUrl = APP_CONFIG.API_BASE_URL.replace(/\/$/, '');
-const endpoints = [
-  ['Data catalogue', 'GET', '/data/catalog', 'Returns networks, data types and live plans.'],
-  ['Buy data', 'POST', '/data/purchase', 'Purchase a data plan using its plan ID.'],
-  ['Airtime catalogue', 'GET', '/airtime/catalog', 'Returns networks, availability and rates.'],
-  ['Buy airtime', 'POST', '/airtime/purchase', 'Purchase VTU airtime for a phone number.'],
-  ['Cable catalogue', 'GET', '/cable/catalog', 'Returns providers and subscription packages.'],
-  ['Verify cable account', 'POST', '/cable/verify', 'Validate a decoder or smart-card number.'],
-  ['Buy cable package', 'POST', '/cable/purchase', 'Purchase the selected TV package.'],
-  ['Electricity catalogue', 'GET', '/electricity/catalog', 'Returns supported distribution companies.'],
-  ['Verify meter', 'POST', '/electricity/verify', 'Validate meter number and customer details.'],
-  ['Buy electricity', 'POST', '/electricity/purchase', 'Purchase electricity and return a token.'],
-  ['Exam catalogue', 'GET', '/exam/catalog', 'Returns available exam PIN products.'],
-  ['Buy exam PIN', 'POST', '/exam/purchase', 'Purchase one or more examination PINs.'],
-  ['Transactions', 'GET', '/transactions', 'Returns transaction history for the account.'],
-  ['Wallet balance', 'GET', '/wallet/balance', 'Returns the current wallet balance.'],
-];
-
-document.querySelector('#api-base').textContent = baseUrl;
-let apiKey = cachedUser.apikey || cachedUser.api_key || getSession().token || '';
-let keyVisible = false;
-const keyNode = document.querySelector('#api-key');
-function renderKey() { keyNode.textContent = keyVisible ? (apiKey || 'Not available') : (apiKey ? `${apiKey.slice(0, 7)}${'•'.repeat(Math.min(18, Math.max(8, apiKey.length - 10)))}${apiKey.slice(-4)}` : 'Not available'); }
-renderKey();
-
-document.querySelector('#endpoint-list').innerHTML = endpoints.map(([name, method, path, note]) => `<article class="endpoint-row"><span class="method ${method.toLowerCase()}">${method}</span><div><b>${name}</b><code>${path}</code><small>${note}</small></div><button type="button" data-path="${path}" aria-label="Copy endpoint"><i class="bi bi-copy"></i></button></article>`).join('');
-document.querySelectorAll('[data-copy]').forEach((button) => button.addEventListener('click', () => {
-  const value = button.dataset.copy === 'api-key' ? apiKey : document.querySelector(`#${button.dataset.copy}`).textContent;
-  copyText(value, 'Copied to clipboard.');
-}));
-document.querySelectorAll('[data-path]').forEach((button) => button.addEventListener('click', () => copyText(`${baseUrl}${button.dataset.path}`, 'Endpoint copied.')));
-document.querySelector('#toggle-key').addEventListener('click', (event) => { keyVisible = !keyVisible; event.currentTarget.querySelector('i').className = `bi bi-eye${keyVisible ? '-slash' : ''}`; renderKey(); });
-
-api('/me').then((response) => {
-  const user = response.user || response.data || response;
-  apiKey = user.apikey || user.api_key || apiKey;
-  renderKey();
-}).catch(() => notify('Using your locally saved API credential.', 'info'));
+let user=bootShell('developer-api');
+const base=APP_CONFIG.API_BASE_URL.replace(/\/$/,'');
+const endpoints=[
+['User Details','GET','/user','Authorization token only','Fetch profile, wallet and API account details.'],['Transaction History','GET','/transactions','status, service, search, per_page optional','Fetch transaction history.'],['Airtime Purchase','POST','/topup','network, mobile_number, amount, airtime_type, Ported_number, request-id','Legacy airtime endpoint.'],['Data Purchase','POST','/data','network, mobile_number, plan, Ported_number, request-id','Legacy data endpoint.'],['Cable Verification','POST','/cable/verification','provider, smart_card_number','Also supports /cable/verify.'],['Cable Purchase','POST','/cable','provider, plan, smart_card_number, request-id','Also supports /cable/purchase.'],['Electricity Verification','POST','/electricity/verification','disco, meter_number, meter_type','Also supports /electricity/verify.'],['Electricity Purchase','POST','/electricity','disco, meter_number, meter_type, amount, customer_phone, request-id','Legacy electricity endpoint.'],['Exam PIN Purchase','POST','/exampin','exam_name, examid, quantity, request-id','Legacy exam PIN endpoint.'],['NIN Verification','POST','/nin','nin or phone, slip_type, request-id','NIN must be 11 digits.'],['BVN Verification','POST','/bvn','bvn or phone, slip_type, request-id','BVN must be 11 digits.'],['Smile Purchase','POST','/smile/purchase','identifier, product_type, account_type, plan_code or amount, request-id','Bundle or recharge purchase.'],['Alpha Topup','POST','/alpha/purchase','phone, planid, amount, request-id','Alpha topup purchase.'],['Ratel','POST','/ratel/purchase','phone, planid, amount, request-id','Ratel purchase.'],['Kirani','POST','/kirani/purchase','phone, planid, amount, minutes, request-id','Kirani purchase.'],['Transfer','POST','/transfer','bank_code, account_number, amount, description, request-id','Legacy transfer endpoint.']];
+const examples=[
+['Airtime Purchase','/topup',{network:'1',mobile_number:'08031234567',amount:100,airtime_type:'VTU',Ported_number:true,'request-id':'AIRTIME-20260621-0001'}],['Data Purchase','/data',{network:1,mobile_number:'08031234567',plan:'101',Ported_number:true,'request-id':'DATA-20260621-0001'}],['Cable Verification','/cable/verification',{provider:'dstv',smart_card_number:'1234567890'}],['Electricity Purchase','/electricity',{disco:'ikeja-electric',meter_number:'12345678901',meter_type:'prepaid',amount:1000,customer_phone:'08031234567','request-id':'POWER-20260621-0001'}],['Exam PIN Purchase','/exampin',{exam_name:'WAEC',examid:'1',quantity:1,'request-id':'EXAM-20260621-0001'}],['NIN Verification','/nin',{nin:'12345678901',slip_type:'regular','request-id':'NIN-20260621-0001'}]];
+const esc=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+document.querySelector('#api-base').textContent=base;
+document.querySelector('#endpoint-list').innerHTML=endpoints.map(([service,method,path,fields,note])=>`<tr><td>${service}</td><td><span class="method-badge method-${method.toLowerCase()}">${method}</span></td><td><code>${base}${path}</code></td><td>${fields}</td><td>${note}</td></tr>`).join('');
+document.querySelector('#api-examples').innerHTML=examples.map(([title,path,payload])=>`<article class="panel doc-example"><div class="doc-section-head"><div><h3>${title}</h3><p class="doc-muted"><span class="method-badge method-post">POST</span> <code>${base}${path}</code></p></div><button class="icon-btn" data-example="${esc(JSON.stringify(payload))}"><i class="bi bi-copy"></i></button></div><p class="doc-muted">Request payload</p><pre class="code-sample"><code>${esc(JSON.stringify(payload,null,2))}</code></pre></article>`).join('');
+let key=user.apikey||user.api_key||getSession().token||'',visible=false;const keyNode=document.querySelector('#api-key');const renderKey=()=>keyNode.textContent=visible?(key||'Not available'):(key?`${key.slice(0,7)}••••••••••••${key.slice(-4)}`:'Not available');renderKey();
+document.querySelector('[data-copy-base]').onclick=()=>copyText(base,'Base URL copied.');document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copyText(document.querySelector(`#${b.dataset.copy}`).textContent,'Copied.'));document.querySelector('[data-copy-key]').onclick=()=>copyText(key,'API key copied.');document.querySelector('#toggle-key').onclick=(e)=>{visible=!visible;e.currentTarget.querySelector('i').className=`bi bi-eye${visible?'-slash':''}`;renderKey()};document.querySelector('#copy-endpoints').onclick=()=>copyText(endpoints.map(([,m,p])=>`${m} ${base}${p}`).join('\n'),'Endpoint list copied.');document.querySelectorAll('[data-example]').forEach(b=>b.onclick=()=>copyText(JSON.stringify(JSON.parse(b.dataset.example),null,2),'Sample copied.'));
+api('/me').then(r=>{user=r.user||r;key=user.apikey||user.api_key||key;renderKey()}).catch(()=>notify('Using your locally saved API key.'));
