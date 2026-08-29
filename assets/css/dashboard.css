@@ -51,6 +51,7 @@ header p { margin:4px 0; color:var(--muted); font-size:11px; }
 .hero-art { width:120px; height:80px; display:grid; place-items:center; border-radius:18px; background:var(--soft); color:var(--brand); font-size:32px; }
 .stats { margin-top:13px; display:grid; grid-template-columns:repeat(3,1fr); gap:11px; }
 .stats article { min-width:0; padding:13px; display:flex; align-items:center; gap:10px; }
+.stats article.clickable-stat { position:relative; cursor:pointer; transition:transform .2s,border-color .2s,box-shadow .2s; }.stats article.clickable-stat:hover { transform:translateY(-3px); border-color:color-mix(in srgb,var(--brand) 32%,var(--line)); box-shadow:0 16px 30px color-mix(in srgb,var(--brand) 14%,transparent); }.stat-arrow { margin-left:auto; color:var(--brand); font-size:13px; }
 .ico { width:43px; height:43px; display:grid; place-items:center; flex:none; border-radius:14px; background:var(--soft); color:var(--brand); }
 .stats span { min-width:0; }
 .stats small { display:block; color:var(--muted); font-size:10px; }
