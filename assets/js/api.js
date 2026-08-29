@@ -1,6 +1,8 @@
 import { APP_CONFIG } from './config.js';
+import { initTheme } from './theme.js?v=20260829-1';
 
 const storage = window.localStorage;
+initTheme();
 
 export function getSession() {
   let user = {};
