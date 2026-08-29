@@ -39,12 +39,12 @@ export async function showResult({ success, title, message }) {
   return Swal.fire({ icon: success ? 'success' : 'error', title, text: message, confirmButtonText: 'Okay', customClass: { popup: 'mbr-alert' } });
 }
 
-export async function runAction(action, { loadingTitle = 'Processing...', loadingText, successTitle = 'Successful', successMessage } = {}) {
+export async function runAction(action, { loadingTitle = 'Processing...', loadingText, successTitle = 'Successful', successMessage, showSuccess = true } = {}) {
   await showProcessing(loadingTitle, loadingText);
   try {
     const response = await action();
     window.Swal.close();
-    await showResult({ success: true, title: successTitle, message: response?.message || successMessage || 'Request completed successfully.' });
+    if (showSuccess) await showResult({ success: true, title: successTitle, message: response?.message || successMessage || 'Request completed successfully.' });
     return response;
   } catch (error) {
     window.Swal?.close();
