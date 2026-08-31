@@ -1,0 +1,93 @@
+import { ADMIN_CONFIG } from './config.js';
+import { api, applyTheme, clearSession, session } from './api.js';
+
+export function initAdminShell(active = '') {
+  if (!session().token) { location.replace(ADMIN_CONFIG.LOGIN_PAGE); return null; }
+  const adminCss=document.querySelector('link[href*="assets/css/admin.css"]');if(adminCss){const cssUrl=new URL(adminCss.href);cssUrl.searchParams.set('v','20260829-21');adminCss.href=cssUrl.href}
+  if (!document.querySelector('link[data-ubuntu-font]')) document.head.insertAdjacentHTML('beforeend','<link data-ubuntu-font rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap">');
+  const savedBrand=localStorage.getItem('adminBrandColor');if(savedBrand)document.documentElement.style.setProperty('--brand',savedBrand);
+  const headerContainer=document.querySelector('.navbar-header .container-fluid');
+  if(headerContainer&&!headerContainer.querySelector('.legacy-header-search')){
+    headerContainer.insertAdjacentHTML('afterbegin',`<div class="legacy-header-search"><i class="fas fa-search" aria-hidden="true"></i><input type="search" placeholder="Search navigation..." aria-label="Search admin navigation"></div><div class="legacy-header-tools"><a href="notifications.html?tab=app" class="legacy-tool-button" title="Notifications" aria-label="Notifications"><i class="fas fa-bell"></i><span></span></a><a href="dashboard.html" class="legacy-tool-button" title="Dashboard" aria-label="Dashboard"><i class="fas fa-layer-group"></i></a></div>`);
+  }
+  api('/admin/theme').then(theme=>{if(theme.color){localStorage.setItem('adminBrandColor',theme.color);document.documentElement.style.setProperty('--brand',theme.color)}document.querySelectorAll('.legacy-logo').forEach(logo=>{logo.innerHTML=`${theme.logo?`<img src="${theme.logo}" alt="${theme.name||'Website'} logo">`:'<b>M</b>'}<span>${theme.name||'MBR DATA'}</span>`})}).catch(()=>{});
+  const admin = session().admin || {}, permissions = admin.permissions || {};
+  const nav = document.querySelector('.nav-primary');
+  const group=(permission,activeKey,icon,label,items)=>`<li class="nav-item" data-nav="${activeKey}" data-permission="${permission}"><a href="#" data-submenu-toggle><i class="${icon}"></i><p>${label}</p><span class="caret"></span></a><div class="collapse"><ul class="nav nav-collapse">${items.map(([text,href])=>`<li><a href="${href}"><span class="sub-item">${text}</span></a></li>`).join('')}</ul></div></li>`;
+  if (nav) nav.innerHTML = `
+    <li class="nav-item" data-nav="dashboard"><a href="dashboard.html"><i class="fas fa-home"></i><p>Dashboard</p></a></li>
+    ${group('users','users','fas fa-user','Manage Users Account',[['Verified Users','users.html?status=1'],['Pending Users KYC','users.html?scope=kyc'],['Unverified User','users.html?status=0'],['Banned User','users.html?status=2']])}
+    ${group('transactions','transactions','fas fa-receipt','Users Transactions',[['Successful Transactions','transactions.html?status=1'],['Fail Transactions','transactions.html?status=0'],['All Transactions','transactions.html']])}
+    ${group('finance','finance','fas fa-wallet','Finance Management',[['Credit User','finance.html?tab=credit'],['Upgrade User','finance.html?tab=upgrade'],['Debit User','finance.html?tab=debit'],['Create Coupon Code','finance.html?tab=coupon']])}
+    ${group('rewards','rewards','fas fa-percent','Referral & CashBack',[['Referral Reward','rewards.html?tab=referral'],['CashBack Reward','rewards.html?tab=cashback'],['Data Giveaway','rewards.html?tab=transfer']])}
+    ${group('sales','sales','fas fa-chart-line','Sales Analysis',[['Sales Analysis','sales-analysis.html']])}
+    ${group('airtime_cash','airtime_cash','fas fa-gift','2 Cash Services',[['Pending Airtime 2 Cash','airtime-cash.html?tab=transactions'],['Airtime 2 Cash Number','airtime-cash.html?tab=numbers']])}
+    ${group('charges','charges','fas fa-percentage','Services Charges',[['Transfer Charges','service-charges.html?tab=transfer'],['Airtime Discount','service-charges.html?tab=airtime'],['Airtime 2 Cash Charges','service-charges.html?tab=airtime_cash'],['Electricity Charges','service-charges.html?tab=electricity'],['Cable Charges','service-charges.html?tab=cable'],['Exam Charges','service-charges.html?tab=exam']])}
+    ${group('services_lock','services_lock','fas fa-unlock-alt','Lock and Unlock Service',[['Network Services','service-locks.html?tab=network_services'],['Data Service','service-locks.html?tab=data'],['Smart Switch Services','service-locks.html?tab=switch'],['Airtime Service','service-locks.html?tab=airtime'],['Airtime Discount','service-locks.html?tab=airtime_discount'],['Cable Service','service-locks.html?tab=cable'],['Exam Service','service-locks.html?tab=exam'],['General Service','service-locks.html?tab=general']])}
+    ${group('bundles','bundles','fas fa-file-archive','Add Bundles',[['Data Plans','bundles.html?tab=data'],['Switch Data Plans','bundles.html?tab=switch'],['Cable Plans','bundles.html?tab=cable'],['Electricity Plans','bundles.html?tab=electricity'],['Smile Plans','bundles.html?tab=smile'],['Alpha Plans','bundles.html?tab=alpha'],['Ratel Plans','bundles.html?tab=ratel'],['Kirani Plans','bundles.html?tab=kirani'],['Exam Plans','bundles.html?tab=exam'],['NIN Plans','bundles.html?tab=nin'],['BVN Plans','bundles.html?tab=bvn']])}
+    ${group('notifications','notifications','fas fa-envelope-open','Notification',[['App Notification','notifications.html?tab=app'],['Email Notification','notifications.html?tab=email'],['Welcome Message','notifications.html?tab=welcome']])}
+    <li class="nav-section"><span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span><h4 class="text-section">Website Setting</h4></li>
+    ${group('website_setting','website_setting','fas fa-cog','Website Setting',[['Website Information','website-settings.html?tab=general'],['Email Configuration','website-settings.html?tab=mail'],['System User','website-settings.html?tab=system']])}
+    ${group('website_management','website_management','fas fa-tasks','Website Management',[['Welcome Message','notifications.html?tab=welcome'],['Change Password','website-management.html?tab=password']])}
+    ${group('api_integration','api_integration','fas fa-globe','API Integration',[['Wallet API','api-integration.html?tab=wallet'],['Data API','api-integration.html?tab=data'],['Airtime API','api-integration.html?tab=airtime'],['General API','api-integration.html?tab=general']])}
+    ${group('payment_gateway','payment_gateway','fas fa-credit-card','Payment Gateway',[['Asfiy API','payment-gateway.html?gateway=asfiy'],['Billstack API','payment-gateway.html?gateway=billstack'],['PaymentPoint API','payment-gateway.html?gateway=paymentpoint'],['M Pay','payment-gateway.html?gateway=mpay']])}
+    <li class="nav-item" data-permission="support"><a href="support.html"><i class="fas fa-headset"></i><p>Support</p></a></li>
+    <li class="nav-section"><span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span><h4 class="text-section">Company</h4></li>
+    <li class="nav-item" data-nav="company"><a href="company.html"><i class="fas fa-building"></i><p>PayPlus Technologies</p></a></li>
+    <li class="nav-section"><span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span><h4 class="text-section">Session</h4></li>
+    <li class="nav-item"><a id="logout" href="javascript:void(0)"><i class="fas fa-sign-out-alt"></i><p>Logout</p></a></li>`;
+  document.querySelectorAll('[data-admin-name]').forEach(n => n.textContent = admin.username || 'Admin');
+  document.querySelectorAll('[data-admin-role]').forEach(n => n.textContent = admin.role || 'Administrator');
+  document.querySelectorAll('[data-avatar]').forEach(n => n.textContent = (admin.username || 'A')[0].toUpperCase());
+  document.querySelectorAll('[data-permission]').forEach(n => { if (!Number(permissions[n.dataset.permission] || 0)) n.remove(); });
+  document.querySelector(`[data-nav="${active}"]`)?.classList.add('active');
+  const navSearch=document.querySelector('.legacy-header-search input');
+  navSearch?.addEventListener('input',()=>{const query=navSearch.value.trim().toLowerCase();document.querySelectorAll('.nav-primary>.nav-item').forEach(item=>{item.style.display=!query||item.textContent.toLowerCase().includes(query)?'':'none'})});
+  const panel=document.querySelector('.main-panel');if(panel&&!panel.querySelector('.admin-product-footer'))panel.insertAdjacentHTML('beforeend','<footer class="admin-product-footer"><span>A Product of</span> <a href="company.html">PayPlus Technologies</a></footer>');
+  document.querySelectorAll('[data-submenu-toggle]').forEach(toggle=>toggle.addEventListener('click',event=>{event.preventDefault();const item=toggle.closest('.nav-item'),panel=item.querySelector('.collapse'),open=panel.classList.toggle('show');toggle.setAttribute('aria-expanded',String(open));item.classList.toggle('submenu-open',open)}));
+  const activeItem=document.querySelector(`[data-nav="${active}"]`);if(activeItem?.querySelector('.collapse')){activeItem.querySelector('.collapse').classList.add('show');activeItem.querySelector('[data-submenu-toggle]').setAttribute('aria-expanded','true')}
+  document.querySelector('#menu')?.addEventListener('click',event=>{event.preventDefault();document.body.classList.toggle('nav-open');document.body.classList.toggle('nav_open',document.body.classList.contains('nav-open'))});
+  document.querySelector('#scrim')?.addEventListener('click',()=>{document.body.classList.remove('nav-open','nav_open')});
+  document.querySelectorAll('.sidebar a[href]:not([href="#"]):not([href^="javascript"])').forEach(link=>link.addEventListener('click',()=>document.body.classList.remove('nav-open','nav_open')));
+  const themeButton=document.querySelector('#theme');
+  const syncThemeButton=()=>{
+    if(!themeButton)return;
+    const dark=document.documentElement.dataset.theme==='dark';
+    themeButton.innerHTML=`<i class="${dark?'fas fa-sun':'fas fa-moon'}" aria-hidden="true"></i><span>${dark?'Light':'Dark'}</span>`;
+    themeButton.setAttribute('aria-label',`Switch to ${dark?'light':'dark'} mode`);
+    themeButton.setAttribute('title',`Switch to ${dark?'light':'dark'} mode`);
+  };
+  syncThemeButton();
+  themeButton?.addEventListener('click',()=>{
+    applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+    syncThemeButton();
+  });
+  document.querySelector('.legacy-profile .avatar-sm')?.addEventListener('click',()=>location.href='website-management.html?tab=password');
+  document.querySelector('.legacy-profile>div:last-child')?.addEventListener('click',()=>location.href='website-management.html?tab=password');
+  document.querySelector('#logout')?.addEventListener('click', async () => {
+    const result = await Swal.fire({ icon:'warning', title:'Sign out?', text:'Your admin session will be closed.', showCancelButton:true, confirmButtonText:'Sign Out', confirmButtonColor:'#132b86' });
+    if (!result.isConfirmed) return;
+    try { await api('/admin/logout', { method:'POST', body:'{}' }); } catch (_) {}
+    clearSession(); location.replace(ADMIN_CONFIG.LOGIN_PAGE);
+  });
+  return admin;
+}
+
+export function handleAdminError(error, title = 'Request failed') {
+  if (error.status === 401) { clearSession(); location.replace(ADMIN_CONFIG.LOGIN_PAGE); return; }
+  Swal.fire({ icon:'error', title, text:error.message, confirmButtonColor:'#132b86' });
+}
+
+export const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+export const statusMeta = (value) => String(value) === '1' ? ['Active','success'] : String(value) === '2' ? ['Pending','warning'] : ['Banned','danger'];
+export const loading = (title = 'Processing…') => Swal.fire({ title, allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+
+export function openLegacyModal({ title, body, confirmText = 'Save', onConfirm, large = true }) {
+  document.querySelector('#legacy-modal-host')?.remove();
+  const host = document.createElement('div'); host.id = 'legacy-modal-host';
+  host.innerHTML = `<div class="modal-backdrop fade show"></div><div class="modal fade show legacy-api-modal" tabindex="-1" role="dialog" style="display:block"><div class="modal-dialog ${large?'modal-lg':''}" role="document"><div class="modal-content"><div class="modal-header no-bd"><h5 class="modal-title">${title}</h5><button type="button" class="close" data-modal-close><span>&times;</span></button></div><div class="modal-body">${body}</div><div class="modal-footer no-bd"><button type="button" class="btn btn-secondary" data-modal-close>Close</button>${onConfirm?`<button type="button" class="btn btn-primary" data-modal-confirm>${confirmText}</button>`:''}</div></div></div></div>`;
+  document.body.append(host); document.body.classList.add('modal-open');
+  const close=()=>{host.remove();document.body.classList.remove('modal-open')};host.querySelectorAll('[data-modal-close]').forEach(b=>b.onclick=close);
+  if(onConfirm) host.querySelector('[data-modal-confirm]').onclick=()=>onConfirm(host,close);
+  return {host,close};
+}

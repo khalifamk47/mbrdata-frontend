@@ -8,6 +8,7 @@ button,input { font:inherit; }
 .side::before { content:""; position:absolute; top:-85px; right:-75px; width:210px; height:210px; border-radius:50%; background:#ffffff0d; pointer-events:none; }
 .brand { position:relative; display:flex; align-items:center; gap:12px; padding:2px 8px 26px; border-bottom:1px solid #ffffff1c; }
 .brand>b,.user i { width:44px; height:44px; display:grid; place-items:center; border-radius:15px; background:#fff; color:var(--brand); box-shadow:0 10px 24px #02061740; }
+.brand-logo { width:48px; height:48px; flex:0 0 48px; object-fit:cover; border:3px solid #fff; border-radius:15px; background:#fff; box-shadow:0 10px 24px #02061740; }
 .brand span { display:grid; }
 .brand strong { color:#fff; font-size:15px; }
 .brand small { color:#ffffff9c; font-size:10px; }

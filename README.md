@@ -15,8 +15,18 @@ python3 -m http.server 4173 -d mbrfrontend
 
 Open `http://127.0.0.1:4173/`.
 
+## Admin interface
+
+The admin frontend is deployed with the user site under `/admin/`:
+
+```text
+http://127.0.0.1:4173/admin/
+```
+
+In production this becomes `https://your-frontend-domain/admin/`. Both
+interfaces communicate with the same backend REST API.
+
 ## GitHub Pages
 
 Publish the `mbrfrontend` directory. All links are relative, so it supports both
 custom domains and repository paths such as `username.github.io/mbrfrontend/`.
-
