@@ -1,4 +1,4 @@
-import { APP_CONFIG } from './config.js';
+import { APP_CONFIG, CLIENT_CONFIG } from './config.js';
 import { api, clearSession, getSession, loadBrand, money, notify, requireAuth } from './api.js';
 
 requireAuth(); loadBrand();
@@ -11,16 +11,12 @@ document.querySelector('#greeting').textContent = `${hour < 12 ? 'Good morning' 
 document.querySelector('#ref-link').value = `${location.origin}${location.pathname.replace(/dashboard\.html$/, '')}register.html?ref=${encodeURIComponent(user.username || '')}`;
 
 const cashbackStat = document.querySelector('#earning-balance').closest('article');
-cashbackStat.classList.add('clickable-stat'); cashbackStat.tabIndex = 0; cashbackStat.setAttribute('role', 'link');
 cashbackStat.querySelector('small').textContent = 'Cashback Balance';
-cashbackStat.insertAdjacentHTML('beforeend', '<i class="bi bi-chevron-right stat-arrow"></i>');
-const openWithdrawal = () => location.href = './withdraw.html';
-cashbackStat.addEventListener('click', openWithdrawal);
-cashbackStat.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') openWithdrawal(); });
+if(CLIENT_CONFIG.features.cashbackWithdrawal!==false){cashbackStat.classList.add('clickable-stat');cashbackStat.tabIndex=0;cashbackStat.setAttribute('role','link');cashbackStat.insertAdjacentHTML('beforeend','<i class="bi bi-chevron-right stat-arrow"></i>');const openWithdrawal=()=>location.href='./withdraw.html';cashbackStat.addEventListener('click',openWithdrawal);cashbackStat.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ')openWithdrawal()})}
 
 const services = [['data','wifi','Buy Data'],['airtime','telephone','Buy Airtime'],['cable','tv','Cable TV'],['electricity','lightning-charge','Electricity'],['exam','ticket-perforated','Exam Pins'],['smile','emoji-smile','Smile Data'],['nin','person-vcard','NIN Verify'],['bvn','fingerprint','BVN Verify'],['alphatopup','broadcast','Alpha Topup'],['ratel','router','Ratel Topup'],['kirani','telephone-outbound','Kirani Minutes']];
 const off=(value)=>['0','off','false','disabled','no'].includes(String(value??'').toLowerCase());
-function renderServices(locks={}){const serviceLocks=locks.services_lock||{};const available=services.filter(([key])=>!Object.hasOwn(serviceLocks,key)||!off(serviceLocks[key]));document.querySelector('#service-grid').innerHTML=available.length?available.map(([key,icon,label])=>`<a class="service" href="service.html?service=${key}"><i class="ico bi bi-${icon}"></i>${label}</a>`).join(''):'<div class="empty">No service is currently available.</div>'}
+function renderServices(locks={}){const serviceLocks=locks.services_lock||{};const featureKey={alphatopup:'alpha'};const available=services.filter(([key])=>CLIENT_CONFIG.features[featureKey[key]||key]!==false&&(!Object.hasOwn(serviceLocks,key)||!off(serviceLocks[key])));document.querySelector('#service-grid').innerHTML=available.length?available.map(([key,icon,label])=>`<a class="service" href="service.html?service=${key}"><i class="ico bi bi-${icon}"></i>${label}</a>`).join(''):'<div class="empty">No service is currently available.</div>'}
 renderServices();
 const txStatus = (value) => { value=String(value??'').toLowerCase(); return ['1','success','successful'].includes(value)?['Successful','success']:['2','pending'].includes(value)?['Pending','pending']:['Failed','failed']; };
 function renderTransactions(rows){document.querySelector('#transaction-list').innerHTML=rows.length?rows.map(t=>{const[s,c]=txStatus(t.status);return`<article class="transaction"><i class="ico bi bi-receipt"></i><div><h4>${String(t.service||t.network||t.type||'Transaction').toUpperCase()}</h4><p>${[t.mobile,t.plans,t.date].filter(Boolean).join(' · ')||'Transaction record'}</p></div><div class="amount">${money(t.amount)}<br><span class="status ${c}">${s}</span></div></article>`}).join(''):'<article class="transaction"><i class="ico bi bi-receipt"></i><div><h4>No transactions yet</h4><p>Your latest payments will appear here.</p></div></article>'}

@@ -1,8 +1,10 @@
-import { APP_CONFIG } from './config.js';
+import { APP_CONFIG, CLIENT_CONFIG } from './config.js';
+import { applyClientIdentity } from './client-config.js';
 import { initTheme } from './theme.js?v=20260829-1';
 
 const storage = window.localStorage;
 initTheme();
+applyClientIdentity(CLIENT_CONFIG);
 
 export function getSession() {
   let user = {};
@@ -26,11 +28,12 @@ export async function api(path, options = {}) {
   const { token } = getSession();
   const headers = new Headers(options.headers || {});
   headers.set('Accept', 'application/json');
+  headers.set('X-PayPlus-License-ID', CLIENT_CONFIG.license.id);
   if (!(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(() => controller.abort(), APP_CONFIG.API_TIMEOUT_MS);
   let response;
   try {
     response = await fetch(`${APP_CONFIG.API_BASE_URL}${path}`, {
@@ -42,7 +45,7 @@ export async function api(path, options = {}) {
     if (error.name === 'AbortError') {
       throw new Error('The server is taking too long to respond. Please try again.');
     }
-    throw new Error('Unable to reach the server. Please check that the local backend is running.');
+    throw new Error('Unable to reach the server. Please check your connection and try again.');
   } finally {
     clearTimeout(timeout);
   }
@@ -71,9 +74,11 @@ export async function loadBrand() {
 }
 
 export function applyBrand(config = {}) {
+  applyClientIdentity(CLIENT_CONFIG);
+  if (!CLIENT_CONFIG.branding.allowBackendOverride) return;
   const rawColor = config.settings?.color || config.client?.brand?.primary_color || config.color;
   const color = normalizeBrandColor(rawColor);
-  const name = config.settings?.name || config.client?.name || config.name || 'MBR Data';
+  const name = config.settings?.name || config.client?.name || config.name || CLIENT_CONFIG.appName;
   if (color) document.documentElement.style.setProperty('--brand', color);
   document.querySelectorAll('[data-brand-name]').forEach((node) => { node.textContent = name; });
 }
@@ -117,8 +122,8 @@ export function renderSidebarNavigation() {
     ['service.html?service=airtime', 'phone', 'Buy Airtime', false],
     ['wallet.html', 'wallet2', 'Add Money', false],
     ['history.html', 'receipt', 'Transaction History', false],
-    ['pricing.html', 'tags', 'Pricing', false],
-    ['developer-api.html', 'code-slash', 'Developer API', false],
+    ...(CLIENT_CONFIG.features.pricing === false ? [] : [['pricing.html', 'tags', 'Pricing', false]]),
+    ...(CLIENT_CONFIG.features.developerApi === false ? [] : [['developer-api.html', 'code-slash', 'Developer API', false]]),
     ['profile.html', 'person-gear', 'Profile', false],
     ['support.html', 'headset', 'Support', false],
   ];

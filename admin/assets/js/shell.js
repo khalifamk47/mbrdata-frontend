@@ -1,16 +1,18 @@
-import { ADMIN_CONFIG } from './config.js';
+import { ADMIN_CONFIG, CLIENT_CONFIG } from './config.js';
+import { applyClientIdentity } from '../../../assets/js/client-config.js';
 import { api, applyTheme, clearSession, session } from './api.js';
 
 export function initAdminShell(active = '') {
   if (!session().token) { location.replace(ADMIN_CONFIG.LOGIN_PAGE); return null; }
   const adminCss=document.querySelector('link[href*="assets/css/admin.css"]');if(adminCss){const cssUrl=new URL(adminCss.href);cssUrl.searchParams.set('v','20260829-21');adminCss.href=cssUrl.href}
   if (!document.querySelector('link[data-ubuntu-font]')) document.head.insertAdjacentHTML('beforeend','<link data-ubuntu-font rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap">');
-  const savedBrand=localStorage.getItem('adminBrandColor');if(savedBrand)document.documentElement.style.setProperty('--brand',savedBrand);
+  applyClientIdentity(CLIENT_CONFIG,{admin:true});
+  const savedBrand=localStorage.getItem('adminBrandColor');if(savedBrand&&CLIENT_CONFIG.branding.allowBackendOverride)document.documentElement.style.setProperty('--brand',savedBrand);
   const headerContainer=document.querySelector('.navbar-header .container-fluid');
   if(headerContainer&&!headerContainer.querySelector('.legacy-header-search')){
     headerContainer.insertAdjacentHTML('afterbegin',`<div class="legacy-header-search"><i class="fas fa-search" aria-hidden="true"></i><input type="search" placeholder="Search navigation..." aria-label="Search admin navigation"></div><div class="legacy-header-tools"><a href="notifications.html?tab=app" class="legacy-tool-button" title="Notifications" aria-label="Notifications"><i class="fas fa-bell"></i><span></span></a><a href="dashboard.html" class="legacy-tool-button" title="Dashboard" aria-label="Dashboard"><i class="fas fa-layer-group"></i></a></div>`);
   }
-  api('/admin/theme').then(theme=>{if(theme.color){localStorage.setItem('adminBrandColor',theme.color);document.documentElement.style.setProperty('--brand',theme.color)}document.querySelectorAll('.legacy-logo').forEach(logo=>{logo.innerHTML=`${theme.logo?`<img src="${theme.logo}" alt="${theme.name||'Website'} logo">`:'<b>M</b>'}<span>${theme.name||'MBR DATA'}</span>`})}).catch(()=>{});
+  api('/admin/theme').then(theme=>{const useBackend=CLIENT_CONFIG.branding.allowBackendOverride;if(useBackend&&theme.color){localStorage.setItem('adminBrandColor',theme.color);document.documentElement.style.setProperty('--brand',theme.color)}const name=useBackend&&theme.name?theme.name:CLIENT_CONFIG.appName;const logo=useBackend&&theme.logo?theme.logo:CLIENT_CONFIG.branding.logoUrl;document.querySelectorAll('.legacy-logo').forEach(node=>{node.innerHTML=`<img data-client-logo src="${logo}" alt="${name} logo"><span>${name.toUpperCase()}</span>`})}).catch(()=>{document.querySelectorAll('.legacy-logo').forEach(node=>{node.innerHTML=`<img data-client-logo src="${CLIENT_CONFIG.branding.logoUrl}" alt="${CLIENT_CONFIG.appName} logo"><span>${CLIENT_CONFIG.appName.toUpperCase()}</span>`})});
   const admin = session().admin || {}, permissions = admin.permissions || {};
   const nav = document.querySelector('.nav-primary');
   const group=(permission,activeKey,icon,label,items)=>`<li class="nav-item" data-nav="${activeKey}" data-permission="${permission}"><a href="#" data-submenu-toggle><i class="${icon}"></i><p>${label}</p><span class="caret"></span></a><div class="collapse"><ul class="nav nav-collapse">${items.map(([text,href])=>`<li><a href="${href}"><span class="sub-item">${text}</span></a></li>`).join('')}</ul></div></li>`;
@@ -43,7 +45,7 @@ export function initAdminShell(active = '') {
   document.querySelector(`[data-nav="${active}"]`)?.classList.add('active');
   const navSearch=document.querySelector('.legacy-header-search input');
   navSearch?.addEventListener('input',()=>{const query=navSearch.value.trim().toLowerCase();document.querySelectorAll('.nav-primary>.nav-item').forEach(item=>{item.style.display=!query||item.textContent.toLowerCase().includes(query)?'':'none'})});
-  const panel=document.querySelector('.main-panel');if(panel&&!panel.querySelector('.admin-product-footer'))panel.insertAdjacentHTML('beforeend','<footer class="admin-product-footer"><span>A Product of</span> <a href="company.html">PayPlus Technologies</a></footer>');
+  const panel=document.querySelector('.main-panel');if(panel&&!panel.querySelector('.admin-product-footer'))panel.insertAdjacentHTML('beforeend',`<footer class="admin-product-footer"><span>A Product of</span> <a href="company.html">${CLIENT_CONFIG.company.name}</a></footer>`);
   document.querySelectorAll('[data-submenu-toggle]').forEach(toggle=>toggle.addEventListener('click',event=>{event.preventDefault();const item=toggle.closest('.nav-item'),panel=item.querySelector('.collapse'),open=panel.classList.toggle('show');toggle.setAttribute('aria-expanded',String(open));item.classList.toggle('submenu-open',open)}));
   const activeItem=document.querySelector(`[data-nav="${active}"]`);if(activeItem?.querySelector('.collapse')){activeItem.querySelector('.collapse').classList.add('show');activeItem.querySelector('[data-submenu-toggle]').setAttribute('aria-expanded','true')}
   document.querySelector('#menu')?.addEventListener('click',event=>{event.preventDefault();document.body.classList.toggle('nav-open');document.body.classList.toggle('nav_open',document.body.classList.contains('nav-open'))});

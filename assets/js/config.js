@@ -1,7 +1,12 @@
+import { CLIENT_CONFIG } from './client-config.js';
+
+export { CLIENT_CONFIG };
+
+const isLocalDevelopment = ['localhost', '127.0.0.1'].includes(location.hostname);
+
 export const APP_CONFIG = Object.freeze({
-  // Replace this with the shared-hosting API before production deployment.
-  API_BASE_URL: localStorage.getItem('clientApiBase') || 'payplustechnologies/api',
+  API_BASE_URL: (isLocalDevelopment && localStorage.getItem('clientApiBase')) || CLIENT_CONFIG.api.baseUrl,
+  API_TIMEOUT_MS: CLIENT_CONFIG.api.timeoutMs,
   LOGIN_PAGE: './login.html',
   DASHBOARD_PAGE: './dashboard.html',
 });
-

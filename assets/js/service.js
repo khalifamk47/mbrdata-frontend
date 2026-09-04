@@ -1,12 +1,14 @@
 import { api, money, notify } from './api.js';
+import { CLIENT_CONFIG } from './config.js';
 import { bootShell } from './shell.js';
 import { loadSweetAlert, runAction } from './alerts.js';
 
 bootShell('service');
 const requested=new URLSearchParams(location.search).get('service')||'data';
 const alias={alphatopup:'alpha'};const service=alias[requested]||requested;
+if(CLIENT_CONFIG.features[service]===false)location.replace('./dashboard.html');
 const configs={data:['Buy Data','Instant Data Top-Up','Buy data bundles instantly.','wifi'],airtime:['Buy Airtime','Instant Airtime Top-Up','Recharge any network instantly.','phone'],cable:['Cable TV','TV Subscription','Renew your decoder subscription.','tv'],electricity:['Electricity','Electricity Bills','Buy power tokens safely.','lightning-charge'],exam:['Exam PIN','Exam Result PIN','Generate examination PINs safely.','ticket-perforated'],smile:['Smile Data','Smile Broadband','Buy Smile bundles instantly.','emoji-smile'],alpha:['Alpha Topup','Alpha Topup','Purchase Alpha mobile bundles.','broadcast'],ratel:['Ratel Topup','Ratel Plans','Purchase Ratel bundles.','router'],kirani:['Kirani Minutes','Kirani Voice','Purchase Kirani voice minutes.','telephone-outbound'],nin:['NIN Verification','Identity Verification','Verify NIN and generate a slip.','person-vcard'],bvn:['BVN Verification','Identity Verification','Verify BVN and generate a slip.','fingerprint']};
-const config=configs[service]||configs.data;document.title=`${config[0]} · MBR Data`;document.querySelector('#service-title').textContent=config[0];document.querySelector('#service-eyebrow').innerHTML=`<i class="bi bi-${config[3]}"></i> ${config[1]}`;document.querySelector('#service-heading').textContent=config[2];
+const config=configs[service]||configs.data;document.title=`${config[0]} · ${CLIENT_CONFIG.appName}`;document.querySelector('#service-title').textContent=config[0];document.querySelector('#service-eyebrow').innerHTML=`<i class="bi bi-${config[3]}"></i> ${config[1]}`;document.querySelector('#service-heading').textContent=config[2];
 const fields=document.querySelector('#service-fields'),form=document.querySelector('#service-form'),submit=document.querySelector('#service-submit'),preview=document.querySelector('#purchase-preview');let catalog={},wallet=0,verified='';
 const off=v=>['0','off','false','disabled','no'].includes(String(v??'').toLowerCase());const val=id=>document.querySelector(`#${id}`)?.value?.trim()||'';const option=(label,value='')=>`<option value="${String(value).replaceAll('"','&quot;')}">${label}</option>`;const requestId=()=>`${service.toUpperCase()}-${Date.now()}-${Math.random().toString(16).slice(2,8)}`;
 function field(id,label,type='text',placeholder=''){return `<div class="field"><label for="${id}">${label}</label><input id="${id}" type="${type}" ${type==='tel'?'inputmode="numeric"':''} placeholder="${placeholder}" required></div>`}function select(id,label){return `<div class="field"><label for="${id}">${label}</label><select id="${id}" required></select></div>`}
