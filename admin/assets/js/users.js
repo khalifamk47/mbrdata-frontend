@@ -1,6 +1,6 @@
 import { ADMIN_CONFIG } from './config.js';
 import { api, money } from './api.js';
-import { backgroundRefresh, escapeHtml, handleAdminError, initAdminShell, loading, openLegacyModal, pageCache, statusMeta } from './shell.js?v=20260905-1';
+import { backgroundRefresh, escapeHtml, handleAdminError, initAdminShell, loading, openLegacyModal, pageCache, statusMeta } from './shell.js?v=20260905-2';
 initAdminShell('users');
 const userQuery=new URLSearchParams(location.search);const state = { status:userQuery.get('scope')==='kyc'?'kyc':(userQuery.get('status')||'1'), page:1 };
 const $ = s => document.querySelector(s);

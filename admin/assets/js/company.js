@@ -1,4 +1,4 @@
-import{mountLegacyPage}from'./legacy-page.js?v=20260905-1';
+import{mountLegacyPage}from'./legacy-page.js?v=20260905-2';
 
 const root=mountLegacyPage('company','PayPlus Technologies','Company');
 

@@ -1,4 +1,4 @@
-import{api}from'./api.js';import{escapeHtml,handleAdminError,loading}from'./shell.js?v=20260905-1';import{mountLegacyPage}from'./legacy-page.js?v=20260905-1';
+import{api}from'./api.js';import{escapeHtml,handleAdminError,loading}from'./shell.js?v=20260905-2';import{mountLegacyPage}from'./legacy-page.js?v=20260905-2';
 const root=mountLegacyPage('notifications','Notification','Notifications'),tab=new URLSearchParams(location.search).get('tab')||'app';let data;const names={app:'App Notification',email:'Email Notification',welcome:'Welcome Message'};
 async function load(){try{data=await api('/admin/notifications');render()}catch(e){handleAdminError(e)}}
 const input=(name,label,type='text',required=true,value='')=>`<div class="form-group"><label>${label}</label><input class="form-control" name="${name}" type="${type}" value="${escapeHtml(value)}" ${required?'required':''}></div>`;

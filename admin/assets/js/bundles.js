@@ -1,4 +1,4 @@
-import{api}from'./api.js';import{escapeHtml,handleAdminError,loading,openLegacyModal}from'./shell.js?v=20260905-1';import{mountLegacyPage}from'./legacy-page.js?v=20260905-1';
+import{api}from'./api.js';import{escapeHtml,handleAdminError,loading,openLegacyModal}from'./shell.js?v=20260905-2';import{mountLegacyPage}from'./legacy-page.js?v=20260905-2';
 const root=mountLegacyPage('bundles','Add Bundles','Bundles');let tab=new URLSearchParams(location.search).get('tab')||'data',data;
 async function load(){try{data=await api(`/admin/bundles?tab=${encodeURIComponent(tab)}`);tab=data.tab;render()}catch(e){handleAdminError(e)}}
 function label(k){return data.config.fields[k]?.label||k.replaceAll('_',' ')}function money(k,v){return ['price','smart','top','affiliate','reseller','api'].includes(k)&&v!==''?`₦${Number(v).toLocaleString(undefined,{minimumFractionDigits:2})}`:escapeHtml(v)}

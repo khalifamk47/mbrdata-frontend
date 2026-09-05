@@ -4,7 +4,7 @@ import { api, applyTheme, clearSession, session } from './api.js';
 
 export function initAdminShell(active = '') {
   if (!session().token) { location.replace(ADMIN_CONFIG.LOGIN_PAGE); return null; }
-  const adminCss=document.querySelector('link[href*="assets/css/admin.css"]');if(adminCss){const cssUrl=new URL(adminCss.href);cssUrl.searchParams.set('v','20260905-1');adminCss.href=cssUrl.href}
+  const adminCss=document.querySelector('link[href*="assets/css/admin.css"]');if(adminCss){const cssUrl=new URL(adminCss.href);cssUrl.searchParams.set('v','20260905-2');adminCss.href=cssUrl.href}
   if (!document.querySelector('link[data-ubuntu-font]')) document.head.insertAdjacentHTML('beforeend','<link data-ubuntu-font rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap">');
   applyClientIdentity(CLIENT_CONFIG,{admin:true});
   const savedBrand=localStorage.getItem('adminBrandColor');if(savedBrand&&CLIENT_CONFIG.branding.allowBackendOverride)document.documentElement.style.setProperty('--brand',savedBrand);
@@ -88,7 +88,10 @@ export function handleAdminError(error, title = 'Request failed') {
 
 export const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 export const statusMeta = (value) => String(value) === '1' ? ['Active','success'] : String(value) === '2' ? ['Pending','warning'] : ['Banned','danger'];
-export const loading = (title = 'Processing…') => Swal.fire({ title, allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+export const loading = (title = 'Processing…', text = 'Please wait while we complete your request.') => {
+  const dots = Array.from({ length:10 }, () => '<span></span>').join('');
+  return Swal.fire({ title, html:`<div class="mbr-loader" aria-hidden="true">${dots}</div><div class="mbr-loader-message">${escapeHtml(text)}</div>`, allowOutsideClick:false, allowEscapeKey:false, showConfirmButton:false, customClass:{ popup:'mbr-alert mbr-processing' } });
+};
 
 export function pageCache(key) {
   const admin = session().admin || {};

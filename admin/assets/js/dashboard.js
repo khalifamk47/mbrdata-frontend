@@ -1,6 +1,6 @@
 import { ADMIN_CONFIG } from './config.js';
 import { api, applyTheme, clearSession, money, session } from './api.js';
-import { backgroundRefresh, escapeHtml, handleAdminError, initAdminShell, loading, openLegacyModal } from './shell.js?v=20260905-1';
+import { backgroundRefresh, escapeHtml, handleAdminError, initAdminShell, loading, openLegacyModal } from './shell.js?v=20260905-2';
 
 if (!session().token) location.replace(ADMIN_CONFIG.LOGIN_PAGE);
 initAdminShell('dashboard');
