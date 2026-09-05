@@ -1,4 +1,4 @@
-import{api}from'./api.js';import{escapeHtml,handleAdminError,loading}from'./shell.js';import{mountLegacyPage}from'./legacy-page.js';
+import{api}from'./api.js';import{escapeHtml,handleAdminError,loading}from'./shell.js?v=20260905-1';import{mountLegacyPage}from'./legacy-page.js?v=20260905-1';
 const root=mountLegacyPage('services_lock','Lock and Unlock Service','Service Locks'),requested=new URLSearchParams(location.search).get('tab')||'data';let payload,tab=requested;
 const networkFields={shareandsell:'Share & Sell',vtu:'VTU',sme:'SME',mtn_sme2:'MTN SME2',corporate:'Corporate',mtn_copun:'MTN Coupon',gifting:'Gifting'};
 async function load(){try{payload=await api('/admin/service-locks');if(!payload.tabs[tab])tab='data';render()}catch(e){handleAdminError(e)}}

@@ -4,7 +4,7 @@ import { api, applyTheme, clearSession, session } from './api.js';
 
 export function initAdminShell(active = '') {
   if (!session().token) { location.replace(ADMIN_CONFIG.LOGIN_PAGE); return null; }
-  const adminCss=document.querySelector('link[href*="assets/css/admin.css"]');if(adminCss){const cssUrl=new URL(adminCss.href);cssUrl.searchParams.set('v','20260829-21');adminCss.href=cssUrl.href}
+  const adminCss=document.querySelector('link[href*="assets/css/admin.css"]');if(adminCss){const cssUrl=new URL(adminCss.href);cssUrl.searchParams.set('v','20260905-1');adminCss.href=cssUrl.href}
   if (!document.querySelector('link[data-ubuntu-font]')) document.head.insertAdjacentHTML('beforeend','<link data-ubuntu-font rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap">');
   applyClientIdentity(CLIENT_CONFIG,{admin:true});
   const savedBrand=localStorage.getItem('adminBrandColor');if(savedBrand&&CLIENT_CONFIG.branding.allowBackendOverride)document.documentElement.style.setProperty('--brand',savedBrand);
@@ -14,6 +14,12 @@ export function initAdminShell(active = '') {
   }
   api('/admin/theme').then(theme=>{const useBackend=CLIENT_CONFIG.branding.allowBackendOverride;if(useBackend&&theme.color){localStorage.setItem('adminBrandColor',theme.color);document.documentElement.style.setProperty('--brand',theme.color)}const name=useBackend&&theme.name?theme.name:CLIENT_CONFIG.appName;const logo=useBackend&&theme.logo?theme.logo:CLIENT_CONFIG.branding.logoUrl;document.querySelectorAll('.legacy-logo').forEach(node=>{node.innerHTML=`<img data-client-logo src="${logo}" alt="${name} logo"><span>${name.toUpperCase()}</span>`})}).catch(()=>{document.querySelectorAll('.legacy-logo').forEach(node=>{node.innerHTML=`<img data-client-logo src="${CLIENT_CONFIG.branding.logoUrl}" alt="${CLIENT_CONFIG.appName} logo"><span>${CLIENT_CONFIG.appName.toUpperCase()}</span>`})});
   const admin = session().admin || {}, permissions = admin.permissions || {};
+  const menuButton = document.querySelector('#menu');
+  if (menuButton) {
+    menuButton.replaceChildren();
+    menuButton.setAttribute('aria-label', 'Open navigation menu');
+    menuButton.setAttribute('title', 'Menu');
+  }
   const nav = document.querySelector('.nav-primary');
   const group=(permission,activeKey,icon,label,items)=>`<li class="nav-item" data-nav="${activeKey}" data-permission="${permission}"><a href="#" data-submenu-toggle><i class="${icon}"></i><p>${label}</p><span class="caret"></span></a><div class="collapse"><ul class="nav nav-collapse">${items.map(([text,href])=>`<li><a href="${href}"><span class="sub-item">${text}</span></a></li>`).join('')}</ul></div></li>`;
   if (nav) nav.innerHTML = `
@@ -48,7 +54,7 @@ export function initAdminShell(active = '') {
   const panel=document.querySelector('.main-panel');if(panel&&!panel.querySelector('.admin-product-footer'))panel.insertAdjacentHTML('beforeend',`<footer class="admin-product-footer"><span>A Product of</span> <a href="company.html">${CLIENT_CONFIG.company.name}</a></footer>`);
   document.querySelectorAll('[data-submenu-toggle]').forEach(toggle=>toggle.addEventListener('click',event=>{event.preventDefault();const item=toggle.closest('.nav-item'),panel=item.querySelector('.collapse'),open=panel.classList.toggle('show');toggle.setAttribute('aria-expanded',String(open));item.classList.toggle('submenu-open',open)}));
   const activeItem=document.querySelector(`[data-nav="${active}"]`);if(activeItem?.querySelector('.collapse')){activeItem.querySelector('.collapse').classList.add('show');activeItem.querySelector('[data-submenu-toggle]').setAttribute('aria-expanded','true')}
-  document.querySelector('#menu')?.addEventListener('click',event=>{event.preventDefault();document.body.classList.toggle('nav-open');document.body.classList.toggle('nav_open',document.body.classList.contains('nav-open'))});
+  menuButton?.addEventListener('click',event=>{event.preventDefault();document.body.classList.toggle('nav-open');document.body.classList.toggle('nav_open',document.body.classList.contains('nav-open'));menuButton.setAttribute('aria-expanded',String(document.body.classList.contains('nav-open')))});
   document.querySelector('#scrim')?.addEventListener('click',()=>{document.body.classList.remove('nav-open','nav_open')});
   document.querySelectorAll('.sidebar a[href]:not([href="#"]):not([href^="javascript"])').forEach(link=>link.addEventListener('click',()=>document.body.classList.remove('nav-open','nav_open')));
   const themeButton=document.querySelector('#theme');
@@ -83,6 +89,25 @@ export function handleAdminError(error, title = 'Request failed') {
 export const escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 export const statusMeta = (value) => String(value) === '1' ? ['Active','success'] : String(value) === '2' ? ['Pending','warning'] : ['Banned','danger'];
 export const loading = (title = 'Processing…') => Swal.fire({ title, allowOutsideClick:false, didOpen:() => Swal.showLoading() });
+
+export function pageCache(key) {
+  const admin = session().admin || {};
+  const owner = admin.id || admin.username || 'admin';
+  const storageKey = `mbrAdminCache:${owner}:${key}`;
+  return {
+    read() { try { return JSON.parse(localStorage.getItem(storageKey) || 'null')?.data || null; } catch (_) { localStorage.removeItem(storageKey); return null; } },
+    write(data) { try { localStorage.setItem(storageKey, JSON.stringify({ savedAt:Date.now(), data })); } catch (_) {} },
+    clear() { localStorage.removeItem(storageKey); },
+  };
+}
+
+export function backgroundRefresh(callback, interval = 45000) {
+  const refresh = () => { if (!document.hidden) Promise.resolve(callback(true)).catch(() => {}); };
+  const timer = window.setInterval(refresh, interval);
+  document.addEventListener('visibilitychange', refresh);
+  window.addEventListener('beforeunload', () => window.clearInterval(timer), { once:true });
+  return timer;
+}
 
 export function openLegacyModal({ title, body, confirmText = 'Save', onConfirm, large = true }) {
   document.querySelector('#legacy-modal-host')?.remove();

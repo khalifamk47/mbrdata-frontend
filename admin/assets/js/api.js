@@ -5,7 +5,7 @@ applyClientIdentity(CLIENT_CONFIG, { admin: true });
 
 export const session = () => ({ token: localStorage.getItem('adminToken') || '', admin: JSON.parse(localStorage.getItem('adminUser') || '{}') });
 export const saveSession = (payload) => { localStorage.setItem('adminToken', payload.token); localStorage.setItem('adminUser', JSON.stringify(payload.admin || {})); };
-export const clearSession = () => { localStorage.removeItem('adminToken'); localStorage.removeItem('adminUser'); };
+export const clearSession = () => { localStorage.removeItem('adminToken'); localStorage.removeItem('adminUser');Object.keys(localStorage).filter((key)=>key.startsWith('mbrAdminCache:')).forEach((key)=>localStorage.removeItem(key)); };
 export const money = (value) => `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export async function api(path, options = {}) {

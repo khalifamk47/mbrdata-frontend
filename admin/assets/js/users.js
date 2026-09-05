@@ -1,12 +1,16 @@
 import { ADMIN_CONFIG } from './config.js';
 import { api, money } from './api.js';
-import { escapeHtml, handleAdminError, initAdminShell, loading, openLegacyModal, statusMeta } from './shell.js?v=20260829-19';
+import { backgroundRefresh, escapeHtml, handleAdminError, initAdminShell, loading, openLegacyModal, pageCache, statusMeta } from './shell.js?v=20260905-1';
 initAdminShell('users');
 const userQuery=new URLSearchParams(location.search);const state = { status:userQuery.get('scope')==='kyc'?'kyc':(userQuery.get('status')||'1'), page:1 };
 const $ = s => document.querySelector(s);
+const cache = pageCache('users'); let hasRendered = false;
 
-async function loadUsers() {
-  $('#users-body').innerHTML = '<tr><td colspan="9" class="text-center py-5">Loading users…</td></tr>';
+function restoreUsersCache() { const saved=cache.read();if(!saved)return false;$('#users-body').innerHTML=saved.body;$('#daily-login').textContent=saved.dailyLogin;$('#type').innerHTML=saved.types;$('#page-info').textContent=saved.pageInfo;$('#prev').disabled=saved.prevDisabled;$('#next').disabled=saved.nextDisabled;Object.entries(saved.counts||{}).forEach(([key,value])=>document.querySelector(`[data-count="${key}"]`)?.replaceChildren(String(value)));hasRendered=true;return true; }
+function saveUsersCache(payload) { const counts={};Object.entries(payload.counts||{}).forEach(([key,value])=>counts[key]=value);cache.write({body:$('#users-body').innerHTML,dailyLogin:$('#daily-login').textContent,types:$('#type').innerHTML,pageInfo:$('#page-info').textContent,prevDisabled:$('#prev').disabled,nextDisabled:$('#next').disabled,counts}); }
+
+async function loadUsers(silent = false) {
+  if (!hasRendered && !silent) $('#users-body').innerHTML = '<tr><td colspan="20" class="text-center py-5">Loading users…</td></tr>';
   const params = new URLSearchParams({ status:state.status, scope:state.status === 'kyc' ? 'kyc' : '', page:state.page, per_page:25, search:$('#search').value, type:$('#type').value });
   try {
     const payload = await api(`/admin/users?${params}`), pager = payload.users;
@@ -17,7 +21,8 @@ async function loadUsers() {
     document.querySelectorAll('[data-edit]').forEach(button => button.insertAdjacentHTML('afterend', ` <button class="btn btn-primary btn-sm" data-login="${button.dataset.edit}" data-username="${escapeHtml(button.closest('tr').children[3]?.textContent || '')}" title="Login as user"><i class="fas fa-sign-in-alt"></i></button>`));
     $('#page-info').textContent = `Page ${pager.current_page} of ${pager.last_page} · ${pager.total} users`;
     $('#prev').disabled = !pager.prev_page_url; $('#next').disabled = !pager.next_page_url;
-  } catch (e) { handleAdminError(e, 'Unable to load users'); }
+    hasRendered = true; saveUsersCache(payload);
+  } catch (e) { if (!silent && !hasRendered) handleAdminError(e, 'Unable to load users'); }
 }
 
 async function userForm(id = null) {
@@ -35,4 +40,4 @@ document.querySelectorAll('[data-status]').forEach(b=>b.onclick=()=>{document.qu
 $('#search').oninput=()=>{clearTimeout(window.userTimer);window.userTimer=setTimeout(()=>{state.page=1;loadUsers();},350)}; $('#type').onchange=()=>{ $('#type').dataset.value=$('#type').value; loadUsers(); }; $('#add-user').onclick=()=>userForm(); $('#prev').onclick=()=>{state.page--;loadUsers()}; $('#next').onclick=()=>{state.page++;loadUsers()};
 $('#users-body').onclick=e=>{const view=e.target.closest('[data-view]'),edit=e.target.closest('[data-edit]'),login=e.target.closest('[data-login]'),del=e.target.closest('[data-delete]');if(view)viewUser(view.dataset.view);if(edit)userForm(edit.dataset.edit);if(login)loginAsUser(login.dataset.login,login.dataset.username);if(del)deleteUser(del.dataset.delete)};
 $('#filter-users').onclick=loadUsers; $('#reset-users').onclick=()=>{$('#search').value='';$('#type').value='';loadUsers()};
-loadUsers();
+const restored=restoreUsersCache();loadUsers(restored);backgroundRefresh(()=>loadUsers(true),45000);
