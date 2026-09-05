@@ -1,5 +1,6 @@
 import { money, notify } from './api.js';
 import { bootShell } from './shell.js';
+import { transactionStatus } from './alerts.js';
 
 bootShell('history');
 
@@ -14,7 +15,9 @@ const service = String(value('service', 'network', 'type') || 'Transaction').rep
 const details = [value('network'), value('mobile', 'mobile_number', 'phone'), value('plans', 'plan', 'description')].filter(Boolean).join(' • ') || 'Transaction record';
 
 document.querySelector('#receipt-amount').textContent = money(value('amount'));
-document.querySelector('#receipt-status').textContent = String(value('status') || 'Successful');
+const status = transactionStatus(value('status'));
+document.querySelector('#receipt-status').textContent = status.label;
+document.querySelector('#receipt-status').classList.add('status', status.className);
 
 const rows = [
   ['Transaction Reference', reference],

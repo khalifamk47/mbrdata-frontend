@@ -39,6 +39,17 @@ export async function showResult({ success, title, message }) {
   return Swal.fire({ icon: success ? 'success' : 'error', title, text: message, confirmButtonText: 'Okay', customClass: { popup: 'mbr-alert' } });
 }
 
+export function transactionStatus(value) {
+  const status = String(value ?? '').trim().toLowerCase();
+  if (['1', 'success', 'successful', 'completed', 'complete', 'approved', 'paid'].includes(status)) {
+    return { label: 'Successful', className: 'success' };
+  }
+  if (['2', 'pending', 'processing', 'queued', 'in progress', 'in_progress'].includes(status)) {
+    return { label: 'Pending', className: 'pending' };
+  }
+  return { label: 'Failed', className: 'failed' };
+}
+
 export async function runAction(action, { loadingTitle = 'Processing...', loadingText, successTitle = 'Successful', successMessage, showSuccess = true } = {}) {
   await showProcessing(loadingTitle, loadingText);
   try {
@@ -58,6 +69,7 @@ export async function showReceipt(tx, money) {
   const ref = String(tx.transid || tx.reference || 'N/A');
   const service = String(tx.service || tx.network || tx.type || 'Transaction').replaceAll('_', ' ').toUpperCase();
   const details = [tx.network, tx.mobile, tx.plans].filter(Boolean).join(' • ') || 'Transaction record';
-  const html = `<div class="receipt-sheet"><div class="receipt-total"><small>TRANSACTION AMOUNT</small><strong>${money(tx.amount)}</strong></div><div class="receipt-line"><span>Transaction ID</span><b>${ref}</b></div><div class="receipt-line"><span>Date & Time</span><b>${tx.date || 'N/A'}</b></div><div class="receipt-line"><span>Service</span><b>${service}</b></div><div class="receipt-line"><span>Details</span><b>${details}</b></div><div class="receipt-line"><span>Old Balance</span><b>${money(tx.oldbal)}</b></div><div class="receipt-line"><span>New Balance</span><b>${money(tx.newbal)}</b></div><div class="receipt-line"><span>Status</span><b>${tx.status || 'Successful'}</b></div><div class="receipt-tools"><button id="receipt-copy" type="button"><i class="bi bi-copy"></i> Copy Ref</button><button id="receipt-print" type="button"><i class="bi bi-printer"></i> Print</button></div></div>`;
+  const status = transactionStatus(tx.status);
+  const html = `<div class="receipt-sheet"><div class="receipt-total"><small>TRANSACTION AMOUNT</small><strong>${money(tx.amount)}</strong></div><div class="receipt-line"><span>Transaction ID</span><b>${ref}</b></div><div class="receipt-line"><span>Date & Time</span><b>${tx.date || 'N/A'}</b></div><div class="receipt-line"><span>Service</span><b>${service}</b></div><div class="receipt-line"><span>Details</span><b>${details}</b></div><div class="receipt-line"><span>Old Balance</span><b>${money(tx.oldbal)}</b></div><div class="receipt-line"><span>New Balance</span><b>${money(tx.newbal)}</b></div><div class="receipt-line"><span>Status</span><b class="status ${status.className}">${status.label}</b></div><div class="receipt-tools"><button id="receipt-copy" type="button"><i class="bi bi-copy"></i> Copy Ref</button><button id="receipt-print" type="button"><i class="bi bi-printer"></i> Print</button></div></div>`;
   return Swal.fire({ title: 'Transaction Receipt', html, width: 520, confirmButtonText: 'Close', confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#132b86', customClass: { popup: 'mbr-alert receipt-popup' }, didOpen: () => { document.querySelector('#receipt-copy').onclick = async () => { await navigator.clipboard.writeText(ref); Swal.showValidationMessage('Transaction reference copied.'); }; document.querySelector('#receipt-print').onclick = () => window.print(); } });
 }
