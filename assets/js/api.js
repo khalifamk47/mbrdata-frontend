@@ -117,14 +117,14 @@ export function renderSidebarNavigation() {
   if (!nav) return;
   const page = location.pathname.split('/').pop() || 'dashboard.html';
   const items = [
-    ['dashboard.html', 'house', 'Dashboard', false],
-    ['service.html?service=data', 'wifi', 'Buy Data', false],
-    ['service.html?service=airtime', 'phone', 'Buy Airtime', false],
-    ['wallet.html', 'wallet2', 'Add Money', false],
-    ['history.html', 'receipt', 'Transaction History', false],
-    ...(CLIENT_CONFIG.features.pricing === false ? [] : [['pricing.html', 'tags', 'Pricing', false]]),
-    ...(CLIENT_CONFIG.features.developerApi === false ? [] : [['developer-api.html', 'code-slash', 'Developer API', false]]),
-    ['profile.html', 'person-gear', 'Profile', false],
+    ['dashboard.html', 'speedometer2', 'Dashboard', false],
+    ['service.html?service=data', 'router-fill', 'Buy Data', false],
+    ['service.html?service=airtime', 'phone-fill', 'Buy Airtime', false],
+    ['wallet.html', 'wallet-fill', 'Add Money', false],
+    ['history.html', 'receipt-cutoff', 'Transaction History', false],
+    ...(CLIENT_CONFIG.features.pricing === false ? [] : [['pricing.html', 'tag-fill', 'Pricing', false]]),
+    ...(CLIENT_CONFIG.features.developerApi === false ? [] : [['developer-api.html', 'braces-asterisk', 'Developer API', false]]),
+    ['profile.html', 'person-badge-fill', 'Profile', false],
     ['support.html', 'headset', 'Support', false],
   ];
   nav.innerHTML = `<small>MAIN MENU</small>${items.map(([href, icon, label, soon]) => `<a href="${soon ? '#' : href}" class="${page === href ? 'active' : ''}" ${soon ? 'data-soon' : ''}><i class="bi bi-${icon}"></i><span>${label}</span>${soon ? '<em>soon</em>' : ''}</a>`).join('')}`;

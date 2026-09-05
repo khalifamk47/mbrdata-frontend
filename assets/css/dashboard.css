@@ -16,7 +16,7 @@ button,input { font:inherit; }
 .side nav::-webkit-scrollbar { display:none; }
 .side nav>small { margin:17px 12px 5px; color:#ffffff82; font-size:10px; font-weight:700; letter-spacing:.15em; }
 .side nav a,.side>button { display:flex; align-items:center; gap:11px; min-height:44px; padding:5px 9px; border:1px solid transparent; border-radius:14px; background:transparent; color:#ffffffc9; font-size:13px; font-weight:700; line-height:1.2; transition:.2s; }
-.side nav a i { width:36px; height:36px; display:grid; place-items:center; flex:none; border:1px solid #ffffff1f; border-radius:11px; background:linear-gradient(145deg,#ffffff1d,#ffffff0a); color:#fff; font-size:17px; box-shadow:inset 0 1px 0 #ffffff1f; transition:.2s; }
+.side nav a i { width:36px; height:36px; display:grid; place-items:center; flex:none; border:1px solid #ffffff24; border-radius:11px; background:linear-gradient(145deg,#ffffff21,#ffffff0b); color:#fff; font-size:17px; line-height:1; text-shadow:0 2px 8px #02061738; box-shadow:inset 0 1px 0 #ffffff24,0 6px 14px #0206171c; transition:.2s; }
 .side nav a span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .side nav a em { margin-left:auto; padding:3px 6px; border-radius:99px; background:#ffffff12; color:#ffffff78; font-size:8px; font-style:normal; letter-spacing:.05em; }
 .side nav a.active,.side nav a:hover { background:#ffffff14; color:#fff; border-color:#ffffff1c; box-shadow:inset 3px 0 0 #fff; transform:translateX(2px); }
